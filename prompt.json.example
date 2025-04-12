@@ -1,0 +1,29 @@
+{
+    "prompts": [
+        {
+            "content": {
+                "steps": [
+                    {
+                        "isEnabled": true,
+                        "text": "",
+                        "type": "message"
+                    },
+                    {
+                        "isEnabled": true,
+                        "text": "",
+                        "type": "message"
+                    },
+                    {
+                        "isEnabled": true,
+                        "text": "",
+                        "type": "message"
+                    }
+                ]
+            },
+            "id": "",
+            "name": "",
+            "type": "sequence"
+        }
+    ],
+    "groups": []
+}

@@ -1,8 +1,8 @@
 import asyncio
-from app.services.app_logic import AppLogic
+from app.app_logic import AppLogic
 # Предполагается, что эти классы определены
-from app.services.ai.media_transcriber import MediaTranscriber
-from app.ai_clients.claude_client import ClaudeClient  # в других файлах
+from app.services.media.transcriber import MediaTranscriber
+from app.api.claude import ClaudeClient  # в других файлах
 
 
 async def main():

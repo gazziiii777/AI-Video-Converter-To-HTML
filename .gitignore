@@ -1,0 +1,7 @@
+.venv/
+logs/*
+results/*
+inputs/*
+.env
+**/__pycache__/
+prompts.json

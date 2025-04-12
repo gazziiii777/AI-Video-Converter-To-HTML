@@ -4,5 +4,5 @@ results/*
 inputs/*
 .env
 **/__pycache__/
-prompts.json
-config.py
+/prompts.json
+/config.py

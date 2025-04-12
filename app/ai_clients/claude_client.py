@@ -1,17 +1,17 @@
 import httpx
 from anthropic import AsyncAnthropic, APIError, RateLimitError, InternalServerError
 # Добавьте ANTHROPIC_API_KEY в config.py
-from config import ANTHROPIC_API_KEY, PROXY
+from core.config import settings
 import time
 
 # Настройка прокси (аналогично вашему текущему коду)
-proxies = PROXY
+proxies = settings.PROXY
 transport = httpx.AsyncHTTPTransport(proxy=proxies)
 http_client = httpx.AsyncClient(transport=transport)
 
 # Инициализация клиента Anthropic
 anthropic_client = AsyncAnthropic(
-    api_key=ANTHROPIC_API_KEY,
+    api_key=settings.ANTHROPIC_API_KEY,
     http_client=http_client
 )
 

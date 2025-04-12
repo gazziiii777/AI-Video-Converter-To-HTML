@@ -1,14 +1,14 @@
 import openai
-from config import OPENAI_API_KEY, PROXI
+from core.config import settings
 import httpx
 
-proxies = PROXI  # Replace with actual proxy
+proxies = settings.PROXY  # Replace with actual proxy
 transport = httpx.AsyncHTTPTransport(proxy=proxies)
 
 http_client = httpx.AsyncClient(transport=transport)
 
 client = openai.AsyncOpenAI(
-    api_key=OPENAI_API_KEY,
+    api_key=settings.OPENAI_API_KEY,
     http_client=http_client  # передаем кастомный HTTP-клиент
 )
 
@@ -19,7 +19,7 @@ class GPTClient:
 
         response = await client.chat.completions.create(
             model="o1",
-            messages=messages,  
+            messages=messages,
         )
 
         answer = response.choices[0].message.content

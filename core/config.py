@@ -8,6 +8,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY")
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     PROXY: str = os.getenv("PROXY")
 
     class Config:

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY")
     PROXY: str = os.getenv("PROXY")
+    INSTAGRAM_LOGIN: str = os.getenv("INSTAGRAM_LOGIN")
+    INSTAGRAM_PASSWORD: str = os.getenv("INSTAGRAM_PASSWORD")
 
     class Config:
         env_file = ".env"

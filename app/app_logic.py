@@ -43,8 +43,9 @@ class AppLogic:
                     messages.append({"role": "user", "content": step["text"]})
 
                     answer = await self.client.ask_claude(
+                        max_tokens=step["max_tokens"],
                         messages=messages,
-                        file_name=f"results/prompts_out/output_prompt_{prompt_counter}.txt"
+                        file_name=f"data/results/prompts_out/output_prompt_{prompt_counter}.txt"
                     )
                     prompt_counter += 1
 

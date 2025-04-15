@@ -1,10 +1,12 @@
 import asyncio
 from app.app_logic import AppLogic
 # Предполагается, что эти классы определены
-from app.services.transcriber import MediaTranscriber
-from app.api.claude import ClaudeClient  # в других файлах
-from app.services.markdown_to_HTML import MarkdownToHTMLConverter
-from app.services.website_parser import WebsiteParser
+from app.utils.transcriber import MediaTranscriber
+from app.client.claude import ClaudeClient  # в других файлах
+from app.client.gpt import GPTClient  # в других файлах
+from app.utils.markdown_to_HTML import MarkdownToHTMLConverter
+from app.utils.website_parser import WebsiteParser
+from app.utils.image_analyzer import ImageProcessor
 
 
 async def main():
@@ -17,21 +19,27 @@ async def main():
     # client = ClaudeClient()
     # app = AppLogic(transcriber, client)
 
-    async with WebsiteParser(headless=True) as downloader:
-        # Пример URL для скачивания изображений
-        await downloader.save_clean_page_content("https://www.prusa3d.com/product/prusa-core-one/")
-        await downloader.download_images(
-            "https://www.prusa3d.com/product/prusa-core-one/",
-            "downloaded_images"
-        )
+    # async with WebsiteParser(headless=True) as downloader:
+    #     # Пример URL для скачивания изображений
+    #     await downloader.save_clean_page_content("https://www.prusa3d.com/product/prusa-core-one/")
+    #     await downloader.download_images(
+    #         "https://www.prusa3d.com/product/prusa-core-one/",
+    #     )
 
-        # 2. Фильтрация по размеру
-        filter_results = WebsiteParser.filter_images_by_size(
-            "downloaded_images",
-            min_width=300,
-            min_height=300,
-            verbose=True
-        )
+    #     # 2. Фильтрация по размеру
+    #     filter_results = await downloader.filter_images_by_size(
+    #         min_width=300,
+    #         min_height=300,
+    #         verbose=True
+    #     )
+
+    llm_client = GPTClient()
+    processor = ImageProcessor(llm_client)
+
+    await processor.process_directory(
+        image_dir="data/img",
+        output_file="data/img/analysis_results.json"
+    )
 
     # # Обработка видео
     # text = await app.process_videos(

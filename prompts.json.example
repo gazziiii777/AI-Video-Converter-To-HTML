@@ -6,17 +6,20 @@
                     {
                         "isEnabled": true,
                         "text": "",
-                        "type": "message"
+                        "type": "message",
+                        "max_tokens": 1500
                     },
                     {
                         "isEnabled": true,
                         "text": "",
-                        "type": "message"
+                        "type": "message",
+                        "max_tokens": 1500
                     },
                     {
                         "isEnabled": true,
                         "text": "",
-                        "type": "message"
+                        "type": "message",
+                        "max_tokens": 1500
                     }
                 ]
             },

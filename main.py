@@ -1,7 +1,7 @@
 import asyncio
 from app.app_logic import AppLogic
 # Предполагается, что эти классы определены
-from app.utils.transcriber import MediaTranscriber
+# from app.utils.transcriber import MediaTranscriber
 from app.client.claude import ClaudeClient  # в других файлах
 from app.client.gpt import GPTClient  # в других файлах
 from app.utils.markdown_to_HTML import MarkdownToHTMLConverter

@@ -19,7 +19,7 @@ class ImageProcessor:
             batch = image_paths[i:i + self.batch_size]
             print(f"Processing batch {i//self.batch_size + 1}...")
 
-            instruction = "Опиши кратко, что на каждом изображении. Формат: '1: [описание]', '2: [описание]', ..."
+            instruction = "These are all pictures related to 3D printer. Describe what is in each image (in detail). If this is a print sample, state so. Format: '1: [description]', '2: [description]', ..."
             descriptions = await self.gpt_client.analyze_images_batch(batch, instruction)
             batch_results = self._parse_descriptions(descriptions, batch)
 
@@ -42,5 +42,5 @@ class ImageProcessor:
 
     def _save_results(self, results: List[Dict], output_file: str):
         """Сохраняет результаты в JSON файл"""
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)

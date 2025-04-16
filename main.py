@@ -4,7 +4,7 @@ from app.app_logic import AppLogic
 # from app.utils.transcriber import MediaTranscriber
 from app.client.claude import ClaudeClient  # в других файлах
 from app.client.gpt import GPTClient  # в других файлах
-from app.utils.markdown_to_HTML import MarkdownToHTMLConverter
+from app.utils.markdown_to_html import MarkdownToHTMLConverter
 from app.utils.website_parser import WebsiteParser
 from app.utils.image_analyzer import ImageProcessor
 

@@ -5,5 +5,8 @@ class InsertsHTML:
         pass
 
 
-    async def get_vidio_code(self, url):
+    async def get_video_code(self, url):
+        pass
+    
+    async def get_img_code(self, url):
         pass

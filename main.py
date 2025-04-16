@@ -40,10 +40,10 @@ async def main():
         image_dir="data/img",
         output_file="data/img/analysis_results.json"
     )
-
+  
     # # Обработка видео
     # text = await app.process_videos(
-    #     folder_path="inputs/videos",
+    #     folder_path="inputs/videos",   
     #     output_prefix="result_"
     # )
 

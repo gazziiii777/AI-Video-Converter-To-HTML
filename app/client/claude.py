@@ -17,7 +17,7 @@ anthropic_client = AsyncAnthropic(
 
 
 class ClaudeClient:
-    async def ask_claude(self, max_tokens, messages, file_name, model="claude-3-7-sonnet-20250219"):
+    async def ask_claude(self, max_tokens, messages, file_name = None, model="claude-3-7-sonnet-20250219"):
         """Запрашивает ответ у Claude с историей диалога с автоматическими повторами при ошибках"""
         max_retries = 10
         claude_messages = self._convert_to_claude_format(messages)
@@ -34,8 +34,10 @@ class ClaudeClient:
                 answer = response.content[0].text
                 print(answer)
 
-                with open(file_name, "w", encoding="utf-8") as f:
-                    f.write(answer)
+                
+                if file_name is not None:
+                    with open(file_name, "w", encoding="utf-8") as f:
+                        f.write(answer)
 
                 return answer
 

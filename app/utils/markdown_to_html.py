@@ -1,5 +1,6 @@
 import re
 import os
+import json
 
 
 class MarkdownToHTMLConverter:
@@ -13,7 +14,7 @@ class MarkdownToHTMLConverter:
                 class="sc-c59b7c5-2 jNytQI">
         </iframe>
         """
-        self.path_to_results = 'data/results/'
+        self.path_to_results = 'data/'
 
     def convert_md_to_html(self, text):
         """Конвертирует Markdown-подобное форматирование в HTML"""
@@ -131,7 +132,30 @@ class MarkdownToHTMLConverter:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         print(f"Результат сохранён в файл: {output_path}")
-
+        
+        
+    def _load_json_data(self, file_path):
+        """
+        Загружает данные из JSON-файла и возвращает их в виде строки
+        
+        :param file_path: Путь к JSON-файлу
+        :return: Строка с содержимым JSON-файла или None при ошибке
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                # Читаем содержимое файла как строку
+                json_string = file.read()
+                # Дополнительная проверка, что это валидный JSON
+                json.loads(json_string)  # Проверяем, но не используем результат
+                return json_string
+        except FileNotFoundError:
+            print(f"Ошибка: Файл {file_path} не найден")
+            return None
+        except json.JSONDecodeError:
+            print(f"Ошибка: Файл {file_path} содержит некорректный JSON")
+            return None
+    
+    
     def process_files(self, file_numbers=None):
         """
         Основной метод для обработки файлов
@@ -139,7 +163,9 @@ class MarkdownToHTMLConverter:
         :param output_path: путь к выходному файлу
         """
         output_path = self.path_to_results + 'combined.html'
-
+        img_description = self._load_json_data('data/img/analysis_results.json')
+        print(img_description)
+        
         if file_numbers is None:
             file_numbers = [4, 8, 12, 16, 20, 24, 28, 31, 35, 39, 43, 47, 51]
 

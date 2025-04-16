@@ -33,13 +33,13 @@ async def main():
     #         verbose=True
     #     )
 
-    llm_client = GPTClient()
-    processor = ImageProcessor(llm_client)
+    # llm_client = GPTClient()
+    # processor = ImageProcessor(llm_client)
 
-    await processor.process_directory(
-        image_dir="data/img",
-        output_file="data/img/analysis_results.json"
-    )
+    # await processor.process_directory(
+    #     image_dir="data/img",
+    #     output_file="data/img/analysis_results.json"
+    # )
   
     # # Обработка видео
     # text = await app.process_videos(
@@ -53,8 +53,8 @@ async def main():
     #     json_file_path="prompts.json"
     # )
 
-    # converter = MarkdownToHTMLConverter()
-    # converter.process_files()
+    converter = MarkdownToHTMLConverter()
+    converter.process_files()
 
 if __name__ == "__main__":
     asyncio.run(main())

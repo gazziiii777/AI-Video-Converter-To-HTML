@@ -1,7 +1,7 @@
 import requests
 import time
 
-API_KEY = ""
+API_KEY = "n-0ab7267fbad2c7d1e45869c257b79464"
 BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
 
 
@@ -54,12 +54,12 @@ def analyze_text(text, keyword="The Prusa CORE One"):
         ).json()
 
         if analysis.get("status") == "ready":
-            return analysis.get("metrics")
+            return analysis.get("terms")
         time.sleep(5)
 
 
 # Пример использования
-with open("combined.txt", "r", encoding="utf-8") as file:
+with open("combined.html", "r", encoding="utf-8") as file:
     text = file.read()
 
 result = analyze_text(text, keyword="The Prusa CORE One")

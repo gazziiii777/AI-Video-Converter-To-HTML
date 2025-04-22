@@ -210,7 +210,7 @@ class MarkdownToHTMLConverter:
             'data/img/analysis_results.json')
 
         if file_numbers is None:
-            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42, 46, 50]
+            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 42, 47, 51]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers

@@ -14,12 +14,12 @@ class AppLogic:
             folder_path=folder_path,
             output_prefix=output_prefix
         )
-        return self.transcriber.merge_txt_files(folder_path='results/txt_output')
+        return self.transcriber.merge_txt_files(folder_path='data/txt_output')
 
     async def run_dialogue(self, initial_text: str, json_file_path: str) -> None:
         """Выполняет диалог на основе prompt.json"""
         messages = [
-            {"role": "user", "content": f"Context: {initial_text}\n\nAnswer only based on the context provided. The context definitely contains the answer."}
+            {"role": "user", "content": f"Context: {initial_text}\n\nAnswer only based on the context provided. The context definitely contains the answer. Don't quote the text"}
         ]
 
         if not os.path.exists(json_file_path):
@@ -45,7 +45,7 @@ class AppLogic:
                     answer = await self.client.ask_claude(
                         max_tokens=step["max_tokens"],
                         messages=messages,
-                        file_name=f"data/results/prompts_out/output_prompt_{prompt_counter}.txt"
+                        file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
                     )
                     prompt_counter += 1
 

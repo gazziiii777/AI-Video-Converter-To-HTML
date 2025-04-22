@@ -3,30 +3,48 @@ import json
 from pathlib import Path
 from typing import List, Dict
 
+SUPPORTED_IMAGE_FORMATS = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+
 
 class ImageProcessor:
     def __init__(self, gpt_client):
         self.gpt_client = gpt_client
-        self.batch_size = 10
+        self.batch_size = 3
+        self.SUPPORTED_IMAGE_FORMATS = [
+            '.png', '.jpg', '.jpeg', '.gif', '.webp']
 
     async def process_directory(self, image_dir: str, output_file: str):
         """Обрабатывает все изображения в директории"""
         all_results = []
-        image_paths = [str(p)
-                       for p in Path(image_dir).glob("*") if p.is_file()]
+
+        # Фильтрация изображений по поддерживаемым форматам
+        image_paths = [
+            str(p) for p in Path(image_dir).glob("*")
+            if p.is_file() and p.suffix.lower() in self.SUPPORTED_IMAGE_FORMATS
+        ]
+
+        if not image_paths:
+            print("⚠️ No supported images found in directory!")
+            return
+
+        print(f"Found {len(image_paths)} supported images to process")
 
         for i in range(0, len(image_paths), self.batch_size):
             batch = image_paths[i:i + self.batch_size]
             print(f"Processing batch {i//self.batch_size + 1}...")
 
-            instruction = "These are all pictures related to 3D printer. Describe what is in each image (in detail). If this is a print sample, state so. Format: '1: [description]', '2: [description]', ..."
-            descriptions = await self.gpt_client.analyze_images_batch(batch, instruction)
-            batch_results = self._parse_descriptions(descriptions, batch)
+            try:
+                instruction = "These are all pictures related to 3D printer. Describe what is in each image (in max detail). If this is a print sample, state so. Format: '1: [description]', '2: [description]', ..."
+                descriptions = await self.gpt_client.analyze_images_batch(batch, instruction)
+                batch_results = self._parse_descriptions(descriptions, batch)
+                all_results.extend(batch_results)
+                self._save_results(all_results, output_file)
 
-            all_results.extend(batch_results)
-            self._save_results(all_results, output_file)
-
-        print(f"Done! Results saved to {output_file}")
+            except Exception as e:
+                print(
+                    f"⚠️ Error processing batch {i//self.batch_size + 1}: {e}")
+                # Пропускаем проблемный батч или обрабатываем отдельно
+                continue
 
     def _parse_descriptions(self, text: str, paths: List[str]) -> List[Dict]:
         """Парсит ответ LLM в структурированный формат"""

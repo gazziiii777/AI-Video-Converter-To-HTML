@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     PROXY: str = os.getenv("PROXY")
     INSTAGRAM_LOGIN: str = os.getenv("INSTAGRAM_LOGIN")
     INSTAGRAM_PASSWORD: str = os.getenv("INSTAGRAM_PASSWORD")
+    RECRAFT_API_KEY: str = os.getenv("RECRAFT_API_KEY")
 
     class Config:
         env_file = ".env"

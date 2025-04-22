@@ -57,3 +57,4 @@ class GPTClient:
         """Кодирует изображение в base64"""
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+

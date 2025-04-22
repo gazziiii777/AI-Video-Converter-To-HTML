@@ -12,9 +12,6 @@ async def get_full_page_content(url):
         # "networkidle" ждет завершения запросов
         await page.goto(url, wait_until="domcontentloaded")
 
-        # Получаем весь HTML
-        html = await page.content()
-
         # ИЛИ извлекаем только текст (без тегов)
         text = await page.evaluate("""() => {
             // Удаляем ненужные элементы (скрипты, стили и т.д.)
@@ -26,7 +23,7 @@ async def get_full_page_content(url):
         }""")
 
         await browser.close()
-        return html, text  # Вернет и HTML, и чистый текст
+        return text  # Вернет и HTML, и чистый текст
 
 # Пример использования
 url = "https://www.prusa3d.com/product/prusa-core-one/"

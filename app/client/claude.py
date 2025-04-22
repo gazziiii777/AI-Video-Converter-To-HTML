@@ -32,7 +32,7 @@ class ClaudeClient:
                 )
 
                 answer = response.content[0].text
-                print(answer)
+                # print(answer)
 
                 
                 if file_name is not None:

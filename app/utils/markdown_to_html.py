@@ -1,6 +1,8 @@
 import re
 import os
 import json
+from app.client.claude import ClaudeClient
+from config import img_html_code
 
 
 class MarkdownToHTMLConverter:
@@ -43,7 +45,7 @@ class MarkdownToHTMLConverter:
 
             # Обработка таблицы
             if '|' in line:
-                if '---' not in line and ('Build Volume' in line or '3D Printer Model' in line):
+                if '---' not in line and not in_table:
                     if not in_table:
                         html_lines.append('<table border="1">')
                         in_table = True
@@ -85,8 +87,9 @@ class MarkdownToHTMLConverter:
 
         return '\n'.join(html_lines)
 
-    def combine_files_to_html(self, output_files, output_path="combined.html"):
+    async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
+        client = ClaudeClient()
         html_content = """<!DOCTYPE html>
             <html>
             <head>
@@ -104,6 +107,7 @@ class MarkdownToHTMLConverter:
             """
 
         for i, file_path in enumerate(output_files):
+
             if not os.path.exists(file_path):
                 print(f"Файл {file_path} не найден, пропускаем...")
                 continue
@@ -124,6 +128,17 @@ class MarkdownToHTMLConverter:
                 html_content += self.convert_md_to_html(
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
+            elif i == 1 or i == 2 or i == 4 or i == 3:
+                messages = [
+                    {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
+                ]
+                messages.append(
+                    {"role": "user", "content": f"Description of the art and file name {img_description}"})
+                anser = await client.ask_claude(100, messages)
+
+                html_content += self.convert_md_to_html(
+                    content) + img_html_code.format(img=f"img/{anser}") + "\n<hr>\n"
+                continue
 
             html_content += self.convert_md_to_html(content) + "\n<hr>\n"
 
@@ -132,12 +147,11 @@ class MarkdownToHTMLConverter:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         print(f"Результат сохранён в файл: {output_path}")
-        
-        
+
     def _load_json_data(self, file_path):
         """
         Загружает данные из JSON-файла и возвращает их в виде строки
-        
+
         :param file_path: Путь к JSON-файлу
         :return: Строка с содержимым JSON-файла или None при ошибке
         """
@@ -146,7 +160,8 @@ class MarkdownToHTMLConverter:
                 # Читаем содержимое файла как строку
                 json_string = file.read()
                 # Дополнительная проверка, что это валидный JSON
-                json.loads(json_string)  # Проверяем, но не используем результат
+                # Проверяем, но не используем результат
+                json.loads(json_string)
                 return json_string
         except FileNotFoundError:
             print(f"Ошибка: Файл {file_path} не найден")
@@ -154,20 +169,48 @@ class MarkdownToHTMLConverter:
         except json.JSONDecodeError:
             print(f"Ошибка: Файл {file_path} содержит некорректный JSON")
             return None
-    
-    
-    def process_files(self, file_numbers=None):
+
+    async def _combine_files_to_txt(self, file_paths, output_path, img_description=None):
+        """
+        Объединяет содержимое нескольких файлов в один текстовый файл
+        :param file_paths: список путей к файлам
+        :param output_path: путь к выходному файлу
+        :param img_description: описание изображений (необязательно)
+        """
+        with open(output_path, 'w', encoding='utf-8') as out_file:
+            # Если нужно, можно добавить заголовок или метаинформацию
+            # if img_description:
+            #     out_file.write("Описания изображений:\n")
+            #     for img_id, desc in img_description.items():
+            #         out_file.write(f"{img_id}: {desc}\n")
+            #     out_file.write("\n" + "="*50 + "\n\n")
+
+            # Объединяем содержимое всех файлов
+            for i, file_path in enumerate(file_paths):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as in_file:
+                        content = in_file.read()
+                        out_file.write(f"=== Файл {i+1} ===\n")
+                        out_file.write(content)
+                        # Добавляем разделитель между файлами
+                        out_file.write('\n\n')
+                except FileNotFoundError:
+                    print(f"Файл не найден: {file_path}")
+                except Exception as e:
+                    print(f"Ошибка при обработке файла {file_path}: {e}")
+
+    async def process_files(self, file_numbers=None):
         """
         Основной метод для обработки файлов
         :param file_numbers: список номеров файлов (например, [4, 8, 12])
-        :param output_path: путь к выходному файлу
         """
-        output_path = self.path_to_results + 'combined.html'
-        img_description = self._load_json_data('data/img/analysis_results.json')
-        print(img_description)
-        
+        html_output_path = self.path_to_results + 'combined.html'
+        txt_output_path = self.path_to_results + 'combined.txt'
+        img_description = self._load_json_data(
+            'data/img/analysis_results.json')
+
         if file_numbers is None:
-            file_numbers = [4, 8, 12, 16, 20, 24, 28, 31, 35, 39, 43, 47, 51]
+            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42, 46, 50]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers
@@ -176,7 +219,13 @@ class MarkdownToHTMLConverter:
         if not files_to_combine:
             print("Не указаны номера файлов для обработки.")
         else:
-            self.combine_files_to_html(files_to_combine, output_path)
+            # Создаем HTML файл (как было раньше)
+            await self.combine_files_to_html(
+                files_to_combine, html_output_path, img_description=img_description)
+
+            # Дополнительно создаем TXT файл
+            await self._combine_files_to_txt(
+                files_to_combine, txt_output_path, img_description=img_description)
 
 
 if __name__ == "__main__":

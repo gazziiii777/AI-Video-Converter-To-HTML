@@ -1,6 +1,9 @@
 import json
 import requests
 import time
+from config import NEUROWRITER_BASE_URL
+import aiohttp
+import asyncio
 
 API_KEY = "n-0ab7267fbad2c7d1e45869c257b79464"
 BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
@@ -69,30 +72,68 @@ BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
 # print(f"SEO-рекомендации: {result}")
 # coding=utf-8
 
+class NeuroWriter:
+    def __init__(self):
+        self.base_url = NEUROWRITER_BASE_URL
+        self.headers = {
+            "X-API-KEY": API_KEY,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+    async def _get_project(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.base_url + "/list-projects",
+                headers=self.headers,
+            ) as response:
+                response_json = await response.json()
+                print(response_json)
+                return response_json[0]["project"]
+            
+            
+    async def _create_query(self):
+        payload = json.dumps({
+            "project": await self._get_project(),
+            "keyword": "keyword",
+            "language": "English",
+            "engine": "google.com"
+        })
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                self.base_url + "/new-query",
+                headers=self.headers,
+                data=payload
+            ) as response:
+                response_json = await response.json()
+                print(response_json)
+                return response_json["query"]
 
-API_ENDPOINT = 'https://app.neuronwriter.com/neuron-api/0.5/writer'
+    async def import_content(self):
+        query = await self._create_query()
+        payload = json.dumps({
+            "query": query,
+            "html": '''<h1>Best Trail Running Shoes in 2024: A Complete Guide</h1>
+                <p>As a trail runner, choosing the right pair of trail running shoes is crucial...</p>''',
+            "title": "Best Trail Running Shoes in 2024: A Complete Guide",
+            "description": "Discover the top trail running shoes of 2024, including models from Altra, Hoka, Nike, and more.",
+        })
 
-headers = {
-    "X-API-KEY": API_KEY,
-    "Accept": "application/json",
-    "Content-Type": "application/json",
-}
+        for attempt in range(5):  # до 5 попыток
+            async with aiohttp.ClientSession() as session:
+                async with session.request(
+                    "POST",
+                    self.base_url + "/import-content",
+                    headers=self.headers,
+                    data=payload
+                ) as response:
+                    response_json = await response.json()
+                    print(f"Attempt {attempt + 1}: {response_json}")
 
-payload = json.dumps({
-    "query": "f4261578dbe5be9f",
-    "html": '''<h1>Best Trail Running Shoes in 2024: A Complete Guide</h1>
-<p>As a trail runner, choosing the right pair of trail running shoes is crucial for a successful and enjoyable running experience. With the wide range of trail running shoes available in 2024, it can be overwhelming to find the best shoe that suits your running style and preferences. In this guide, we will explore what makes a great trail running shoe, discuss the top trail running shoe brands, compare the best trail running shoes of 2024, delve into the technology behind trail-running shoes, and help you choose the best overall trail running shoe.</p>
-<h2>What makes a great trail running shoe?</h2>
-<p>When looking for the perfect trail running shoe, there are several key features to consider that can significantly impact your performance on the trails. A good trail running shoe should provide adequate support, cushioning, and protection while being durable enough to withstand the rigors of varied terrains.</p>
-<h3>Key features to look for in trail running shoes</h3>
-<p>Key features to look for in a trail running shoe include a durable outsole with lugs for traction, a protective rock plate to shield your feet from sharp objects, a roomy and protective toe box, and a comfortable and supportive midsole for underfoot cushioning.</p>
-<h3>Importance of traction in trail running shoes</h3>
-<p>The traction of a trail running shoe is essential for maintaining grip on varied terrains such as technical trails, muddy paths, and rocky surfaces. Lugs on the outsole provide the necessary traction to help you navigate challenging terrain and prevent slips and falls.</p>''',
-    "title": "Best Trail Running Shoes in 2024: A Complete Guide",
-    "description": "Discover the top trail running shoes of 2024, including models from Altra, Hoka, Nike, and more. Find your perfect pair with our complete guide.",
-})
+                    if response_json is not None:
+                        return response_json
 
-response = requests.request(
-    "POST", API_ENDPOINT + "/import-content", headers=headers, data=payload)
-response_json = response.json()
-print(response_json)
+            print("Response was None, retrying after delay...")
+            await asyncio.sleep(100)
+
+        print("Failed after 5 attempts.")
+        return None

@@ -128,7 +128,7 @@ class MarkdownToHTMLConverter:
                 html_content += self.convert_md_to_html(
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
-            elif i == 1 or i == 2 or i == 4 or i == 3:
+            else:
                 messages = [
                     {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
                 ]
@@ -210,7 +210,7 @@ class MarkdownToHTMLConverter:
             'data/img/analysis_results.json')
 
         if file_numbers is None:
-            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 42, 47, 51]
+            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42, 50]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers

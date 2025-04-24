@@ -108,12 +108,11 @@ class NeuroWriter:
                 print(response_json)
                 return response_json["query"]
 
-    async def import_content(self):
+    async def import_content(self, text):
         query = await self._create_query()
         payload = json.dumps({
             "query": query,
-            "html": '''<h1>Best Trail Running Shoes in 2024: A Complete Guide</h1>
-                <p>As a trail runner, choosing the right pair of trail running shoes is crucial...</p>''',
+            "html": text,
             "title": "Best Trail Running Shoes in 2024: A Complete Guide",
             "description": "Discover the top trail running shoes of 2024, including models from Altra, Hoka, Nike, and more.",
         })

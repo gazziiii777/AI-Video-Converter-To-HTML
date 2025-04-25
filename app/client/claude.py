@@ -12,7 +12,7 @@ http_client = httpx.AsyncClient(transport=transport)
 # Инициализация клиента Anthropic
 anthropic_client = AsyncAnthropic(
     api_key=settings.ANTHROPIC_API_KEY,
-    http_client=http_client
+    # http_client=http_client
 )
 
 

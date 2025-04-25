@@ -1,7 +1,7 @@
 import asyncio
 from app.app_logic import AppLogic
 # Предполагается, что эти классы определены
-# from app.utils.transcriber import MediaTranscriber
+from app.utils.transcriber import MediaTranscriber
 from app.client.claude import ClaudeClient  # в других файлах
 from app.client.gpt import GPTClient  # в других файлах
 from app.utils.markdown_to_html import MarkdownToHTMLConverter
@@ -11,15 +11,15 @@ from app.utils.image_analyzer import ImageProcessor
 
 
 async def main():
-    # # Инициализация компонентов
-    # transcriber = MediaTranscriber(
+    # Инициализация компонентов
+    transcriber = MediaTranscriber(
 
-    #     model_name="base",
-    #     language="en"
-    # )
+        model_name="base",
+        language="en"
+    )
 
-    # client = ClaudeClient()
-    # app = AppLogic(transcriber, client)
+    client = ClaudeClient()
+    app = AppLogic(transcriber, client)
 
     # with open('links.txt', 'r') as file:
     #     urls = file.readlines()
@@ -51,17 +51,17 @@ async def main():
     #     output_file="data/img/analysis_results.json"
     # )
 
-    # # Обработка видео
-    # text = await app.process_videos(
-    #     folder_path="data/videos",
-    #     output_prefix="result_"
-    # )
+    # Обработка видео
+    text = await app.process_videos(
+        folder_path="data/videos",
+        output_prefix="result_"
+    )
 
-    # # Выполнение диалога
-    # await app.run_dialogue(
-    #     initial_text=text,
-    #     json_file_path="prompts.json"
-    # )
+    # Выполнение диалога
+    await app.run_dialogue(
+        initial_text=text,
+        json_file_path="prompts.json"
+    )
 
     converter = MarkdownToHTMLConverter()
     await converter.process_files()

@@ -11,10 +11,10 @@ class TextOnImage:
         background_color: tuple = (0, 0, 0),
         padding: int = 20,
         font_size: int = 40,
-        font_path: str = "arial.ttf",
+        font_path: str = "fonts/din-pro.ttf",
         bottom_margin: int = 40,
         text_position_ratio: float = 1/3,
-        fixed_folder: str = "data/img"
+        fixed_folder: str = "data/img/"
     ):
         """
         Класс для добавления текста с подложкой на изображение.
@@ -38,6 +38,7 @@ class TextOnImage:
         self.font_size = font_size
         self.font_path = font_path
         self.bottom_margin = bottom_margin
+        self.fixed_folder = fixed_folder
         self.text_position_ratio = text_position_ratio
 
         self.image = None
@@ -74,7 +75,7 @@ class TextOnImage:
         try:
             self.font = ImageFont.truetype(self.font_path, self.font_size)
         except IOError:
-            self.font = ImageFont.load_default()
+            self.font = ImageFont.load_default(self.font_size)
 
     def calculate_dimensions(self):
         """Вычисляет размеры текста и подложки"""
@@ -110,9 +111,10 @@ class TextOnImage:
         self.image.save(output_path)
         print(f"Текст с подложкой добавлен! Результат: {output_path}")
 
-    def process(self, filename: str = "output.jpg"):
+    def process(self, new_filename: str = "output.jpg"):
         """Основной метод обработки. Принимает только имя файла (например, 'output.jpg')."""
-        output_path = self.fixed_folder + filename  # Полный путь
+        print( self.fixed_folder)
+        output_path = self.fixed_folder + new_filename  # Полный путь
         
         self.load_image()
         self.load_font()

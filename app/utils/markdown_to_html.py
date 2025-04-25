@@ -88,6 +88,13 @@ class MarkdownToHTMLConverter:
 
         return '\n'.join(html_lines)
 
+    async def get_description_by_filename(self, filename, data):
+        data_1 = json.loads(data)
+        for item in data_1:
+            if item["image"] == filename:
+                return item["description"]
+        return None  # если файл не найден
+
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
         client = ClaudeClient()
@@ -131,24 +138,27 @@ class MarkdownToHTMLConverter:
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
             else:
-                print(img_description)
-
                 messages = [
                     {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
                 ]
                 messages.append(
                     {"role": "user", "content": f"Description of the art and file name {img_description}"})
-                anwser = await client.ask_claude(100, messages)
-                answer_without_ext = anwser.split('.')[0]
-                if answer_without_ext.isdigit():
-                    print(img_description)
+                file_name_answer = await client.ask_claude(100, messages)
+                file_name_answer_without_ext = file_name_answer.split('.')[0]
+                if file_name_answer_without_ext.isdigit():
+                    desc = await self.get_description_by_filename(file_name_answer, img_description)
+                    messages = [
+                        {"role": "user", "content": f"Create a 2-3 word statement about the following image: {desc}"}
+                    ]
+                    desc_answer = await client.ask_claude(100, messages)
                     processor1 = TextOnImage(
-                        filename=anwser,
-                        text="Текст на изображении",
+                        filename=file_name_answer,
+                        text=desc_answer,
                     )
-                    processor1.process()
+                    new_filename = file_name_answer_without_ext + "_new.jpg"
+                    processor1.process(new_filename)
                     html_content += self.convert_md_to_html(
-                        content) + img_html_code.format(img=f"img/{anwser}") + "\n<hr>\n"
+                        content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
                     continue
                 else:
                     html_content += self.convert_md_to_html(

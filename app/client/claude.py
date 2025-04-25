@@ -41,7 +41,7 @@ class ClaudeClient:
 
                 return answer
 
-            except (APIError, RateLimitError, InternalServerError) as e:
+            except Exception as e:
                 last_exception = e
                 if attempt < max_retries:
                     wait_time = 70

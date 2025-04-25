@@ -110,14 +110,16 @@ class TextOnImage:
         self.image.save(output_path)
         print(f"Текст с подложкой добавлен! Результат: {output_path}")
 
-    def process(self, output_path: str = "data/img/output.jpg"):
-        """Основной метод обработки"""
+    def process(self, filename: str = "output.jpg"):
+        """Основной метод обработки. Принимает только имя файла (например, 'output.jpg')."""
+        output_path = self.fixed_folder + filename  # Полный путь
+        
         self.load_image()
         self.load_font()
         self.calculate_dimensions()
         self.calculate_positions()
         self.draw_elements()
-        self.save_image(output_path)
+        self.save_image(output_path)  # Сохраняем в указанный путь
 
 
 # Пример использования с файлом в data/img/

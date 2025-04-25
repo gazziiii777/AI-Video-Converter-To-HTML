@@ -3,16 +3,17 @@ import os
 import json
 from app.client.claude import ClaudeClient
 from config import img_html_code
+from app.utils.text_on_image import TextOnImage
 
 
 class MarkdownToHTMLConverter:
     def __init__(self):
         self.youtube_iframe = """
-        <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                src="https://www.youtube-nocookie.com/embed/O04RM-KCP68?si=pu2-LwdzHJ8v5NlS" 
-                title="YouTube video player" 
-                loading="lazy" 
-                frameborder="0" 
+        <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                src="https://www.youtube-nocookie.com/embed/O04RM-KCP68?si=pu2-LwdzHJ8v5NlS"
+                title="YouTube video player"
+                loading="lazy"
+                frameborder="0"
                 class="sc-c59b7c5-2 jNytQI">
         </iframe>
         """
@@ -90,6 +91,7 @@ class MarkdownToHTMLConverter:
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
         client = ClaudeClient()
+        # text_on_image = TextOnImage()
         html_content = """<!DOCTYPE html>
             <html>
             <head>
@@ -129,18 +131,31 @@ class MarkdownToHTMLConverter:
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
             else:
+                print(img_description)
+
                 messages = [
                     {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
                 ]
                 messages.append(
                     {"role": "user", "content": f"Description of the art and file name {img_description}"})
-                anser = await client.ask_claude(100, messages)
-
-                html_content += self.convert_md_to_html(
-                    content) + img_html_code.format(img=f"img/{anser}") + "\n<hr>\n"
+                anwser = await client.ask_claude(100, messages)
+                answer_without_ext = anwser.split('.')[0]
+                if answer_without_ext.isdigit():
+                    print(img_description)
+                    processor1 = TextOnImage(
+                        filename=anwser,
+                        text="Текст на изображении",
+                    )
+                    processor1.process()
+                    html_content += self.convert_md_to_html(
+                        content) + img_html_code.format(img=f"img/{anwser}") + "\n<hr>\n"
+                    continue
+                else:
+                    html_content += self.convert_md_to_html(
+                        content) + "\n<hr>\n"
                 continue
 
-            html_content += self.convert_md_to_html(content) + "\n<hr>\n"
+            # html_content += self.convert_md_to_html(content) + "\n<hr>\n"
 
         html_content += "</body></html>"
 

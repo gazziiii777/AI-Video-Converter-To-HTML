@@ -7,3 +7,4 @@ inputs/*
 **/__pycache__/
 /prompts.json
 data/
+links.txt

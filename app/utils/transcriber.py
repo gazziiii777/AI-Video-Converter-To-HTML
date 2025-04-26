@@ -118,12 +118,12 @@ class MediaTranscriber:
     ) -> None:
         """Сохраняет результаты транскрибации в файлы."""
         # Создаем папки если их нет
-        os.makedirs("txt_output", exist_ok=True)
-        os.makedirs("srt_output", exist_ok=True)
+        os.makedirs("data/txt_output", exist_ok=True)
+        os.makedirs("data/srt_output", exist_ok=True)
 
         # Полные пути к файлам
-        txt_path = os.path.join("txt_output", output_txt)
-        srt_path = os.path.join("srt_output", output_srt)
+        txt_path = os.path.join("data/txt_output", output_txt)
+        srt_path = os.path.join("data/srt_output", output_srt)
 
         # Сохраняем текст
         with open(txt_path, "w", encoding="utf-8") as f:

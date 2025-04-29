@@ -1,45 +1,19 @@
-# import yt_dlp
+import requests
 
-# url = 'https://www.youtube.com/watch?v=2AYuijbofiM&t=453s'
-
-# ydl_opts = {
-#     'format': 'best',  # Выбрать лучшее качество
-#     'outtmpl': '%(title)s.%(ext)s',  # Сохранять файл с названием видео
-# }
-
-# with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-#     ydl.download([url])
-
-from yt_dlp import YoutubeDL
-
-def search_youtube(query, max_results=5):
-    options = {
-        'quiet': True,
-        'skip_download': True,
-        'extract_flat': 'in_playlist',
-        'force_generic_extractor': True,
-        'noplaylist': True
+def get_google_links(query):
+    params = {
+        "q": query,
+        "api_key": "625f9e3bb726af130350e2198a35644e820472f345e5cd423bb11ef9cb2ae2a0",
+        "num": 5,
+        "location": "Moscow, Russia"  # <-- вот здесь указываешь нужный город/страну
     }
+    response = requests.get("https://serpapi.com/search", params=params)
+    data = response.json()
     
-    with YoutubeDL(options) as ydl:
-        search_query = f"ytsearch{max_results * 2}:{query}"  # ищем чуть больше, чтобы потом отфильтровать
-        info = ydl.extract_info(search_query, download=False)
-        videos = info.get('entries', [])
-        
-        links = []
-        for video in videos:
-            # Проверяем, что это не шорт
-            if 'shorts' not in video.get('url', '') and video.get('duration', 0) > 60:
-                links.append(f"https://www.youtube.com/watch?v={video['id']}")
-            if len(links) >= max_results:
-                break
-        
-        return links
+    links = []
+    for result in data.get("organic_results", [])[:5]:
+        links.append(result.get("link"))
+    
+    return links
 
-# Пример использования
-if __name__ == "__main__":
-    query = input("Введите поисковый запрос: ")
-    videos = search_youtube(query)
-    for video in videos:
-        print(video)
-
+print(get_google_links("как сделать парсер на питоне"))

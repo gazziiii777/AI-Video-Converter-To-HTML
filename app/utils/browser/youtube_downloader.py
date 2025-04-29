@@ -1,4 +1,6 @@
 from yt_dlp import YoutubeDL
+import os
+import re
 
 
 class YouTubeDownloader:
@@ -16,7 +18,7 @@ class YouTubeDownloader:
     def __init__(self,
                  max_results: int = 5,
                  min_duration: int = 60,
-                 output_template: str = '%(title)s.%(ext)s',
+                 output_template: str = 'data/videos/%(title)s.%(ext)s',
                  format: str = 'bestvideo+bestaudio/best',
                  merge_format: str = 'mp4'):
         self.max_results = max_results
@@ -25,7 +27,7 @@ class YouTubeDownloader:
         self.format = format
         self.merge_format = merge_format
 
-    def _search(self, query: str) -> list[str]:
+    async def _search(self, query: str) -> list[str]:
         """
         Выполняет поиск по запросу и возвращает список ссылок на видео,
         исключая YouTube Shorts.
@@ -54,10 +56,11 @@ class YouTubeDownloader:
                 break
         return links
 
-    def _download(self, links: list[str]) -> None:
+    async def _download(self, links: list[str]) -> None:
         """
         Скачивает список видео по ссылкам.
         """
+        folder = 'data/videos'
         dl_opts = {
             'outtmpl': self.output_template,
             'format': self.format,
@@ -66,18 +69,29 @@ class YouTubeDownloader:
         with YoutubeDL(dl_opts) as ydl:
             ydl.download(links)
 
-    def search_and_download(self, query: str) -> None:
+        for file in os.listdir(folder):
+            full_path = os.path.join(folder, file)
+            if os.path.isfile(full_path):
+                name, ext = os.path.splitext(file)
+                # Берем только буквы/цифры
+                first_word = re.split(r'\W+', name)[0]
+                if first_word:
+                    new_filename = os.path.join(folder, f"{first_word}{ext}")
+                    if full_path != new_filename:
+                        os.rename(full_path, new_filename)
+
+    async def search_and_download(self, query: str) -> None:
         """
         Полный процесс: поиск и загрузка видео по запросу.
         """
-        links = self._search(query)
+        links = await self._search(query)
         if not links:
             print("Видео не найдены.")
             return
         print(f"Найдено и будет загружено: {len(links)} видео.")
         for idx, link in enumerate(links, 1):
             print(f"{idx}. {link}")
-        self._download(links)
+        await self._download(links)
 
 
 if __name__ == '__main__':

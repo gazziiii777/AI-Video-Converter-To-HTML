@@ -7,3 +7,6 @@ img_html_code = '''
 
 RECRAFT_BASE_URL = "https://external.api.recraft.ai/v1"
 NEUROWRITER_BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
+SERPAPI_BASE_URL = "https://serpapi.com/search"
+
+NUMBER_OF_LINKS_to_ANALYZE = 5

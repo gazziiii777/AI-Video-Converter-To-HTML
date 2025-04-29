@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     INSTAGRAM_PASSWORD: str = os.getenv("INSTAGRAM_PASSWORD")
     RECRAFT_API_KEY: str = os.getenv("RECRAFT_API_KEY")
     NEUROWRITER_API_KEY: str = os.getenv("NEUROWRITER_API_KEY")
+    SERPAPI_API_KEY: str = os.getenv("SERPAPI_API_KEY")
 
     class Config:
         env_file = ".env"

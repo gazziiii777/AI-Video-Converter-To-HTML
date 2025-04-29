@@ -4,12 +4,12 @@ from app.app_logic import AppLogic
 from app.utils.media.transcriber import MediaTranscriber
 from app.client.claude import ClaudeClient  # в других файлах
 from app.client.gpt import GPTClient  # в других файлах
-from app.utils.markdown_to_html import MarkdownToHTMLConverter
+from app.utils.export.markdown_to_html import MarkdownToHTMLConverter
 from app.utils.browser.website_parser import WebsiteParser
 from app.utils.media.image_analyzer import ImageProcessor
 # from app.client.re1111 import ask
 from app.utils.browser.youtube_downloader import YouTubeDownloader
-
+from app.utils.browser.link_searcher import get_google_links
 
 async def main():
     # Инициализация компонентов
@@ -22,7 +22,8 @@ async def main():
     client = ClaudeClient()
     app = AppLogic(transcriber, client)
     downloader_video = YouTubeDownloader()
-    await downloader_video.search_and_download("gpt")
+    await downloader_video.search_and_download("Название принтера")
+    # urls = await get_google_links("Название принтера")
     # with open('links.txt', 'r') as file:
     #     urls = file.readlines()
 
@@ -32,7 +33,7 @@ async def main():
 
     # async with WebsiteParser(headless=True) as downloader:
     #     # Скачиваем текст с каждого сайта
-    #     for url in urls:
+    #     for url in urls:``
     #         url = url.strip()  # Убираем лишние пробелы и символы новой строки
     #         print(f"Скачиваем контент с сайта: {url}")
     #         await downloader.save_clean_page_content(url)

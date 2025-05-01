@@ -20,8 +20,8 @@ async def main():
         language="en"
     )
 
-    # client = ClaudeClient()
-    # app = AppLogic(transcriber, client)
+    client = ClaudeClient()
+    app = AppLogic(transcriber, client)
     # downloader_video = YouTubeDownloader()
     # await downloader_video.search_and_download("Название принтера")
 
@@ -58,16 +58,16 @@ async def main():
     )
 
     # Обработка видео
-    # text = await app.process_videos(
-    #     folder_path="data/videos",
-    #     output_prefix="result_"
-    # )
+    text = await app.process_videos(
+        folder_path="data/videos",
+        output_prefix="result_"
+    )
 
     # Выполнение диалога
-    # await app.run_dialogue(
-    #     initial_text=text,
-    #     json_file_path="prompts.json"
-    # )
+    await app.run_dialogue(
+        initial_text=text,
+        json_file_path="prompts.json"
+    )
 
     converter = MarkdownToHTMLConverter()
     await converter.process_files()

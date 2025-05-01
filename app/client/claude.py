@@ -17,7 +17,7 @@ anthropic_client = AsyncAnthropic(
 
 
 class ClaudeClient:
-    async def ask_claude(self, max_tokens, messages, file_name = None, model="claude-3-7-sonnet-20250219"):
+    async def ask_claude(self, max_tokens, messages, file_name=None, model="claude-3-7-sonnet-20250219"):
         """Запрашивает ответ у Claude с историей диалога с автоматическими повторами при ошибках"""
         max_retries = 10
         claude_messages = self._convert_to_claude_format(messages)
@@ -34,7 +34,6 @@ class ClaudeClient:
                 answer = response.content[0].text
                 # print(answer)
 
-                
                 if file_name is not None:
                     with open(file_name, "w", encoding="utf-8") as f:
                         f.write(answer)
@@ -58,6 +57,20 @@ class ClaudeClient:
             f"All {max_retries} attempts failed. Last error: {str(last_exception)}")
         raise last_exception if last_exception else Exception(
             "Unknown error after retries")
+
+    async def ask_claude_with_stream(self, max_tokens: int, messages: list[dict]) -> str:
+        response = await anthropic_client.messages.create(
+            model="claude-3-opus-20240229",  # замени на нужную тебе модель
+            messages=messages,
+            max_tokens=max_tokens,
+            stream=True
+        )
+
+        result = ""
+        async for chunk in response:
+            if chunk.type == "content_block_delta":
+                result += chunk.delta.text
+        return result
 
     def _convert_to_claude_format(self, messages):
         """Конвертирует сообщения из формата OpenAI в формат Claude"""

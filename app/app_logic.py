@@ -47,6 +47,16 @@ class AppLogic:
                         messages=messages,
                         file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
                     )
+                    messages_remove_quotes = [
+                        {"role": "user",
+                            "content": f"Context: {answer}\n\nRemove all quotes from this text (you can rewrite it in other words, but without quotes!)"}
+                    ]
+                    answer_without_quotes = await self.client.ask_claude(
+                        max_tokens=step["max_tokens"],
+                        messages=messages_remove_quotes,
+                        file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
+                    )
                     prompt_counter += 1
 
-                    messages.append({"role": "assistant", "content": answer})
+                    messages.append(
+                        {"role": "assistant", "content": answer_without_quotes})

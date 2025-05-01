@@ -2,6 +2,8 @@ import os
 import json
 from pathlib import Path
 from typing import List, Dict
+from PIL import Image
+import imagehash
 
 SUPPORTED_IMAGE_FORMATS = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
 
@@ -62,3 +64,40 @@ class ImageProcessor:
         """Сохраняет результаты в JSON файл"""
         with open(output_file, "w", encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
+            
+    async def delete_duplicates(self):
+        # Папка с изображениями
+        folder = "data/img"
+        hashes = {}
+        duplicates = []
+
+        threshold = 20  # Допуск на различие в хэшах
+
+        for filename in os.listdir(folder):
+            if not filename.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.webp')):
+                continue
+            filepath = os.path.join(folder, filename)
+            try:
+                with Image.open(filepath) as img:
+                    hash = imagehash.phash(img)
+                    duplicate_found = False
+                    for existing_hash in hashes:
+                        if abs(hash - existing_hash) <= threshold:
+                            print(f"Дубликат найден: {filename} ≈ {hashes[existing_hash]}")
+                            duplicates.append(filepath)
+                            duplicate_found = True
+                            break
+                    if not duplicate_found:
+                        hashes[hash] = filename
+            except Exception as e:
+                print(f"Ошибка с {filename}: {e}")
+
+        # Удаление найденных дубликатов
+        for dup in duplicates:
+            try:
+                os.remove(dup)
+                print(f"Удалено: {dup}")
+            except Exception as e:
+                print(f"Не удалось удалить {dup}: {e}")
+
+

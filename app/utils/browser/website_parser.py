@@ -44,8 +44,9 @@ class WebsiteParser:
         self.page = await self.browser.new_page()
 
         try:
+            import time
             await self.page.goto(url, wait_until="domcontentloaded")
-
+            time.sleep(10)
             images = await self.page.evaluate("""() => {
                 return Array.from(document.querySelectorAll('img')).map(img => ({
                     src: img.src,
@@ -174,7 +175,6 @@ class WebsiteParser:
         """
         Фильтрует изображения по минимальному размеру
 
-        :param folder_path: Путь к папке с изображениями
         :param min_width: Минимальная ширина
         :param min_height: Минимальная высота
         :param verbose: Выводить информацию о процессе
@@ -184,6 +184,7 @@ class WebsiteParser:
             'total': 0,
             'deleted': 0,
             'remaining': 0,
+            'resized': 0,
             'errors': 0
         }
 
@@ -216,15 +217,27 @@ class WebsiteParser:
                     else:
                         results['remaining'] += 1
 
+                        # Увеличиваем изображение, если ширина < 300
+                        if width < 200 or height < 200:
+                            new_size = (width * 2, height * 2)
+                            resized_img = img.resize(new_size, Image.LANCZOS)
+                            resized_img.save(file_path)
+                            results['resized'] += 1
+                            if verbose:
+                                logger.info(
+                                    f"Увеличено: {filename} → {new_size}")
+
             except Exception as e:
                 results['errors'] += 1
                 if verbose:
                     logger.error(f"Ошибка при обработке {filename}: {str(e)}")
+
         if verbose:
             logger.info("\nРезультаты фильтрации:")
             logger.info(f"Всего проверено: {results['total']}")
             logger.info(f"Удалено: {results['deleted']}")
             logger.info(f"Оставлено: {results['remaining']}")
+            logger.info(f"Увеличено: {results['resized']}")
             logger.info(f"Ошибок: {results['errors']}")
 
         return results

@@ -3,7 +3,7 @@ import os
 import json
 from app.client.claude import ClaudeClient
 from config import img_html_code
-from app.utils.text_on_image import TextOnImage
+from app.utils.media.text_on_image import TextOnImage
 
 
 class MarkdownToHTMLConverter:
@@ -95,9 +95,14 @@ class MarkdownToHTMLConverter:
                 return item["description"]
         return None  # если файл не найден
 
+
+    async def _caption_and_image_for_section(self, img_description):
+        pass
+    
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
         client = ClaudeClient()
+        used_images = set()
         # text_on_image = TextOnImage()
         html_content = """<!DOCTYPE html>
             <html>
@@ -138,17 +143,40 @@ class MarkdownToHTMLConverter:
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
             else:
-                messages = [
-                    {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
-                ]
-                messages.append(
-                    {"role": "user", "content": f"Description of the art and file name {img_description}"})
-                file_name_answer = await client.ask_claude(100, messages)
-                file_name_answer_without_ext = file_name_answer.split('.')[0]
+                max_attempts = 5
+                attempt = 0
+                file_name_answer = None
+
+                while attempt < max_attempts:
+                    messages = [
+                        {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
+                    ]
+                    messages.append(
+                        {"role": "user", "content": f"Description of the art and file name {img_description}"}
+                    )
+                    if file_name_answer is not None:
+                        messages.append(
+                            {"role": "user", "content": f"Don`t use images with names {used_images}"}
+                        )
+                    file_name_answer = await client.ask_claude(20, messages)
+                    file_name_answer_without_ext = file_name_answer.split('.')[0]
+
+                    if file_name_answer_without_ext not in used_images:
+                        used_images.add(file_name_answer_without_ext)
+                        break  # нашли уникальное изображение
+                    else:
+                        print(f"Изображение '{file_name_answer}' уже использовано, пробуем снова...")
+                        attempt += 1
+
+                if attempt == max_attempts:
+                    print("Не удалось получить уникальное изображение после нескольких попыток.")
+                    html_content += self.convert_md_to_html(content) + "\n<hr>\n"
+                    continue
+
                 if file_name_answer_without_ext.isdigit():
                     desc = await self.get_description_by_filename(file_name_answer, img_description)
                     messages = [
-                        {"role": "user", "content": f"Create a 2-3 word statement about the following image: {desc}"}
+                        {"role": "user", "content": f"Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce text: {content}. Your caption should: 1. Highlight a key feature or benefit of the product 2. Be technically accurate 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently Don’t write the text of the e-commerce product page itself. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities"}
                     ]
                     desc_answer = await client.ask_claude(100, messages)
                     processor1 = TextOnImage(
@@ -164,6 +192,7 @@ class MarkdownToHTMLConverter:
                     html_content += self.convert_md_to_html(
                         content) + "\n<hr>\n"
                 continue
+
 
             # html_content += self.convert_md_to_html(content) + "\n<hr>\n"
 
@@ -235,7 +264,7 @@ class MarkdownToHTMLConverter:
             'data/img/analysis_results.json')
 
         if file_numbers is None:
-            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42, 50]
+            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers

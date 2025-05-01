@@ -10,9 +10,9 @@ class TextOnImage:
         text_color: tuple = (255, 255, 255),
         background_color: tuple = (0, 0, 0),
         padding: int = 20,
-        font_size: int = 40,
+        font_size: int = 20,
         font_path: str = "fonts/din-pro.ttf",
-        bottom_margin: int = 40,
+        bottom_margin: int = 0,
         text_position_ratio: float = 1/3,
         fixed_folder: str = "data/img/"
     ):
@@ -113,9 +113,9 @@ class TextOnImage:
 
     def process(self, new_filename: str = "output.jpg"):
         """Основной метод обработки. Принимает только имя файла (например, 'output.jpg')."""
-        print( self.fixed_folder)
+        print(self.fixed_folder)
         output_path = self.fixed_folder + new_filename  # Полный путь
-        
+
         self.load_image()
         self.load_font()
         self.calculate_dimensions()

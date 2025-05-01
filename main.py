@@ -11,60 +11,63 @@ from app.utils.media.image_analyzer import ImageProcessor
 from app.utils.browser.youtube_downloader import YouTubeDownloader
 from app.utils.browser.link_searcher import get_google_links
 
+
 async def main():
-    # Инициализация компонентов
+    # # Инициализация компонентов
     transcriber = MediaTranscriber(
 
         model_name="base",
         language="en"
     )
 
-    client = ClaudeClient()
-    app = AppLogic(transcriber, client)
-    downloader_video = YouTubeDownloader()
-    await downloader_video.search_and_download("Название принтера")
-    # urls = await get_google_links("Название принтера")
-    # with open('links.txt', 'r') as file:
-    #     urls = file.readlines()
+    # client = ClaudeClient()
+    # app = AppLogic(transcriber, client)
+    # downloader_video = YouTubeDownloader()
+    # await downloader_video.search_and_download("Название принтера")
 
-    # # Применяем скачивание только к первому URL для изображений
-    # # Убираем возможные лишние пробелы или символы новой строки
-    # first_url = urls[0].strip()
+    urls = await get_google_links("Prusa CORE One")
+    with open('links.txt', 'r') as file:
+        first_url = file.readlines()
 
-    # async with WebsiteParser(headless=True) as downloader:
-    #     # Скачиваем текст с каждого сайта
-    #     for url in urls:``
-    #         url = url.strip()  # Убираем лишние пробелы и символы новой строки
-    #         print(f"Скачиваем контент с сайта: {url}")
-    #         await downloader.save_clean_page_content(url)
+    # Применяем скачивание только к первому URL для изображений
+    # Убираем возможные лишние пробелы или символы новой строки
+    first_url = first_url[0].strip()
+    async with WebsiteParser(headless=True) as downloader:
+        # Скачиваем текст с каждого сайта
+        for url in urls:
+            url = url.strip()  # Убираем лишние пробелы и символы новой строки
+            print(f"Скачиваем контент с сайта: {url}")
+            await downloader.save_clean_page_content(url)
 
-    #     # Скачиваем и фильтруем изображения только с первого сайта
-    #     await downloader.download_images(first_url)
-    #     filter_results = await downloader.filter_images_by_size(
-    #         min_width=300,
-    #         min_height=300,
-    #         verbose=True
-    #     )
+        print(first_url)
+        # Скачиваем и фильтруем изображения только с первого сайта
+        await downloader.download_images(first_url)
 
-    # llm_client = GPTClient()
-    # processor = ImageProcessor(llm_client)
+        filter_results = await downloader.filter_images_by_size(
+            min_width=300,
+            min_height=300,
+            verbose=True
+        )
 
-    # await processor.process_directory(
-    #     image_dir="data/img",
-    #     output_file="data/img/analysis_results.json"
-    # )
+    llm_client = GPTClient()
+    processor = ImageProcessor(llm_client)
+    await processor.delete_duplicates()
+    await processor.process_directory(
+        image_dir="data/img",
+        output_file="data/img/analysis_results.json"
+    )
 
     # Обработка видео
-    text = await app.process_videos(
-        folder_path="data/videos",
-        output_prefix="result_"
-    )
+    # text = await app.process_videos(
+    #     folder_path="data/videos",
+    #     output_prefix="result_"
+    # )
 
     # Выполнение диалога
-    await app.run_dialogue(
-        initial_text=text,
-        json_file_path="prompts.json"
-    )
+    # await app.run_dialogue(
+    #     initial_text=text,
+    #     json_file_path="prompts.json"
+    # )
 
     converter = MarkdownToHTMLConverter()
     await converter.process_files()

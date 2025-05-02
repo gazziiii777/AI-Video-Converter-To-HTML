@@ -45,7 +45,7 @@ class AppLogic:
                     answer = await self.client.ask_claude(
                         max_tokens=step["max_tokens"],
                         messages=messages,
-                        file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
+                        file_name=f"data/prompts_out_with_quotes/output_prompt_{prompt_counter}.txt"
                     )
                     messages_remove_quotes = [
                         {"role": "user",

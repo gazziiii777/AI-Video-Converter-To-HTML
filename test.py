@@ -1,38 +1,37 @@
-# import requests
+from PIL import Image
+import cv2
+import numpy as np
 
-# def get_google_links(query):
-#     params = {
-#         "q": query,
-#         "api_key": "625f9e3bb726af130350e2198a35644e820472f345e5cd423bb11ef9cb2ae2a0",
-#         "num": 5,
-#         "location": "Moscow, Russia"  # <-- вот здесь указываешь нужный город/страну
-#     }
-#     response = requests.get("https://serpapi.com/search", params=params)
-#     data = response.json()
+def enhance_image(input_path, output_path):
+    # Загрузка изображения
+    image = Image.open(input_path)
+    img = np.array(image)
 
-#     links = []
-#     for result in data.get("organic_results", [])[:5]:
-#         links.append(result.get("link"))
+    # Преобразуем в BGR для OpenCV
+    if img.shape[2] == 4:  # RGBA
+        img = cv2.cvtColor(img, cv2.COLOR_RGBA2BGR)
+    else:
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
-#     return links
+    # Увеличение резкости (sharpen)
+    sharpen_kernel = np.array([[-1, -1, -1],
+                               [-1,  9, -1],
+                               [-1, -1, -1]])
+    sharpened = cv2.filter2D(img, -1, sharpen_kernel)
 
-# print(get_google_links("как сделать парсер на питоне"))
+    # Уменьшение шума (билатеральный фильтр)
+    denoised = cv2.bilateralFilter(sharpened, d=9, sigmaColor=75, sigmaSpace=75)
 
-import asyncio
-from app.client.claude import ClaudeClient
+    # Яркость и контраст (опционально)
+    enhanced = cv2.convertScaleAbs(denoised, alpha=1.2, beta=10)
 
+    # Преобразуем обратно в RGB
+    final_img = cv2.cvtColor(enhanced, cv2.COLOR_BGR2RGB)
+    result = Image.fromarray(final_img)
 
-async def main():
-    client = ClaudeClient()
-    with open("data/combined.html", "r", encoding="utf-8") as f:
-        content = f.read()
-    messages = [
-        {"role": "user",
-            "content": f"Remove all quotes from this text (you can rewrite it in other words, but without quotes!) text:  {content}"}
-    ]
+    # Сохраняем результат
+    result.save(output_path)
+    print(f"Сохранено улучшенное изображение: {output_path}")
 
-    file_name_answer = await client.ask_claude(20000, messages)
-    print(file_name_answer)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Пример использования
+enhance_image("70.jpg", "output.jpg")

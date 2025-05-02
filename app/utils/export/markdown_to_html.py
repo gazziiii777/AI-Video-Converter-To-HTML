@@ -95,15 +95,90 @@ class MarkdownToHTMLConverter:
                 return item["description"]
         return None  # если файл не найден
 
+    async def _parse_input_data(self, answer):
+        result = []
+        lines = answer.strip().split('\n')
 
-    async def _caption_and_image_for_section(self, img_description):
-        pass
-    
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines
+            if not line:
+                continue
+
+            # Check if line starts with a number (optionally followed by '. ')
+            if not line[0].isdigit():
+                print(f"Skipping line (doesn't start with digit): '{line}'")
+                continue
+
+            try:
+                # Split on first occurrence of '. ' to remove numbering
+                if '. ' in line:
+                    content = line.split('. ', 1)[1]
+                else:
+                    # If no '. ', try to find the first space after the number
+                    space_pos = line.find(' ')
+                    if space_pos > 0:
+                        content = line[space_pos+1:]
+                    else:
+                        content = line
+
+                # Split filename and description
+                if ' - ' in content:
+                    filename, description = content.split(' - ', 1)
+                else:
+                    # Handle case where there's no description
+                    filename = content.strip()
+                    description = ""
+
+                result.append([filename.strip(), description.strip()])
+            except Exception as e:
+                print(f"Error processing line: '{line}'. Error: {e}")
+                continue
+
+        return result
+
+    async def _caption_and_image_for_section(self, img_description, output_files):
+        client = ClaudeClient()
+        content = ''
+
+        for i, file_path in enumerate(output_files):
+
+            if not os.path.exists(file_path):
+                print(f"Файл {file_path} не найден, пропускаем...")
+                continue
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content += f.read()
+        messages = [
+            {"role": "user",
+                "content": f"Read the content about the following product {content}. I am writing an e-commerce page with the following sections: 1. What is the print quality and performance of the [Printer Name]? 2. Which materials can you use with the [Printer Name]? 3. What is the build volume of the [Printer Name]? 4. What printer controls are available on the [Printer Name]? 5. What connectivity options are available on the [Printer Name]? 6. What software is offered with the [Printer Name]? 7. What is the design and build quality of the [Printer Name]? 8. How reliable is the [Printer Name] and what maintenance does it require? 9. What comes included in the box with [Printer Name]? 10. What upgrades and accessories are available for the [Printer Name]? 11. How much does the [Printer Name] cost? 12. What support and warranty come with the [Printer Name]? EACH SECTION CONTAINS AN IMAGE AT THE END. Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce page. Your caption should: 1. Highlight a key feature or benefit of the product 2. Be technically accurate 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently Don’t write the text of the e-commerce product page itself. Only provide captions in a numbered list from 1 to 12. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities"}
+        ]
+        answer_without_quotes = await client.ask_claude(
+            max_tokens=3000,
+            messages=messages,
+            # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
+        )
+        messages.append(
+            {"role": "assistant", "content": answer_without_quotes})
+        messages.append(
+            {"role": "user", "content": f"Now pick, which of the images in the file attached would be most appropriate for each section and corresponding caption. Note: once an image is selected, it cannot be used for another section.\nContent: {content}, images description: {img_description}\nWrite your answer in this form: photo_name - caption "})
+
+        answer = await client.ask_claude(
+            max_tokens=3000,
+            messages=messages,
+            # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
+        )
+
+        result = await self._parse_input_data(answer)
+        return result
+
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
         client = ClaudeClient()
         used_images = set()
         # text_on_image = TextOnImage()
+        img_and_desk = await self._caption_and_image_for_section(img_description, output_files)
+
         html_content = """<!DOCTYPE html>
             <html>
             <head>
@@ -119,6 +194,8 @@ class MarkdownToHTMLConverter:
             </head>
             <body>
             """
+        a = await self._caption_and_image_for_section(img_description, output_files)
+        print(a)
 
         for i, file_path in enumerate(output_files):
 
@@ -143,57 +220,69 @@ class MarkdownToHTMLConverter:
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
             else:
-                max_attempts = 5
-                attempt = 0
-                file_name_answer = None
+                # max_attempts = 5
+                # attempt = 0
+                # file_name_answer = None
 
-                while attempt < max_attempts:
-                    messages = [
-                        {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
-                    ]
-                    messages.append(
-                        {"role": "user", "content": f"Description of the art and file name {img_description}"}
-                    )
-                    if file_name_answer is not None:
-                        messages.append(
-                            {"role": "user", "content": f"Don`t use images with names {used_images}"}
-                        )
-                    file_name_answer = await client.ask_claude(20, messages)
-                    file_name_answer_without_ext = file_name_answer.split('.')[0]
+                # while attempt < max_attempts:
+                #     messages = [
+                #         {"role": "user", "content": f"Tell me which picture best fits the context: {content}. In response, write only the name of the picture"}
+                #     ]
+                #     messages.append(
+                #         {"role": "user", "content": f"Description of the art and file name {img_description}"}
+                #     )
+                #     if file_name_answer is not None:
+                #         messages.append(
+                #             {"role": "user",
+                #                 "content": f"Don`t use images with names {used_images}"}
+                #         )
+                #     file_name_answer = await client.ask_claude(20, messages)
+                #     file_name_answer_without_ext = file_name_answer.split('.')[
+                #         0]
 
-                    if file_name_answer_without_ext not in used_images:
-                        used_images.add(file_name_answer_without_ext)
-                        break  # нашли уникальное изображение
-                    else:
-                        print(f"Изображение '{file_name_answer}' уже использовано, пробуем снова...")
-                        attempt += 1
+                #     if file_name_answer_without_ext not in used_images:
+                #         used_images.add(file_name_answer_without_ext)
+                #         break  # нашли уникальное изображение
+                #     else:
+                #         print(
+                #             f"Изображение '{file_name_answer}' уже использовано, пробуем снова...")
+                #         attempt += 1
 
-                if attempt == max_attempts:
-                    print("Не удалось получить уникальное изображение после нескольких попыток.")
-                    html_content += self.convert_md_to_html(content) + "\n<hr>\n"
-                    continue
+                # if attempt == max_attempts:
+                #     print(
+                #         "Не удалось получить уникальное изображение после нескольких попыток.")
+                #     html_content += self.convert_md_to_html(
+                #         content) + "\n<hr>\n"
+                #     continue
 
-                if file_name_answer_without_ext.isdigit():
-                    desc = await self.get_description_by_filename(file_name_answer, img_description)
-                    messages = [
-                        {"role": "user", "content": f"Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce text: {content}. Your caption should: 1. Highlight a key feature or benefit of the product 2. Be technically accurate 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently Don’t write the text of the e-commerce product page itself. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities"}
-                    ]
-                    desc_answer = await client.ask_claude(100, messages)
-                    processor1 = TextOnImage(
-                        filename=file_name_answer,
-                        text=desc_answer,
-                    )
-                    new_filename = file_name_answer_without_ext + "_new.jpg"
-                    processor1.process(new_filename)
-                    html_content += self.convert_md_to_html(
-                        content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
-                    continue
-                else:
-                    html_content += self.convert_md_to_html(
-                        content) + "\n<hr>\n"
+                # if file_name_answer_without_ext.isdigit():
+                #     desc = await self.get_description_by_filename(file_name_answer, img_description)
+                #     messages = [
+                #         {"role": "user", "content": f"Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce text: {content}. Your caption should: 1. Highlight a key feature or benefit of the product 2. Be technically accurate 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently Don’t write the text of the e-commerce product page itself. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities"}
+                #     ]
+                #     desc_answer = await client.ask_claude(100, messages)
+                #     processor1 = TextOnImage(
+                #         filename=file_name_answer,
+                #         text=desc_answer,
+                #     )
+                #     new_filename = file_name_answer_without_ext + "_new.jpg"
+                #     processor1.process(new_filename)
+                #     html_content += self.convert_md_to_html(
+                #         content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
+                #     continue
+                # else:
+                #     html_content += self.convert_md_to_html(
+                #         content) + "\n<hr>\n"
+                # continue
+                processor1 = TextOnImage(
+                    filename=img_and_desk[i+1][0],
+                    text=img_and_desk[i+1][1],
+                )
+                new_filename = img_and_desk[i+1][0].split('.')[0] + "_new.jpg"
+                processor1.process(new_filename)
+                html_content += self.convert_md_to_html(
+                    content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
                 continue
-
-
             # html_content += self.convert_md_to_html(content) + "\n<hr>\n"
 
         html_content += "</body></html>"

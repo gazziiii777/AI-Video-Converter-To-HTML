@@ -9,10 +9,12 @@ class TextOnImage:
         text: str,
         text_color: tuple = (255, 255, 255),
         background_color: tuple = (0, 0, 0),
-        padding: int = 20,
+        padding: int = 10,
         font_size: int = 20,
         font_path: str = "fonts/din-pro.ttf",
-        bottom_margin: int = 0,
+        bottom_margin: int = 10,
+        bottom_padding: int = 10,
+        side_padding: int = 20,
         text_position_ratio: float = 1/3,
         fixed_folder: str = "data/img/"
     ):
@@ -40,7 +42,8 @@ class TextOnImage:
         self.bottom_margin = bottom_margin
         self.fixed_folder = fixed_folder
         self.text_position_ratio = text_position_ratio
-
+        self.bottom_padding = bottom_padding
+        self.side_padding = side_padding
         self.image = None
         self.draw = None
         self.font = None
@@ -83,18 +86,18 @@ class TextOnImage:
         self.text_width = text_bbox[2] - text_bbox[0]
         self.text_height = text_bbox[3] - text_bbox[1]
 
-        self.box_width = self.text_width + 2 * self.padding
-        self.box_height = self.text_height + 2 * self.padding
+        self.box_width = self.text_width + 1.5 * self.padding
+        self.box_height = self.text_height + 1.5 * self.padding
 
     def calculate_positions(self):
         """Вычисляет позиции подложки и текста"""
         image_width, image_height = self.image.size
-        self.box_x = 0
+        
+        self.box_x = self.bottom_margin
         self.box_y = image_height - self.box_height - self.bottom_margin
 
         self.text_x = self.box_x + (self.box_width - self.text_width) // 2
-        self.text_y = self.box_y + \
-            (self.box_height - self.text_height) * self.text_position_ratio
+        self.text_y = self.box_y + (self.box_height - self.text_height) // 4
 
     def draw_elements(self):
         """Рисует подложку и текст"""

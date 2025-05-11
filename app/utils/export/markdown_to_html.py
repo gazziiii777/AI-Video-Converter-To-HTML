@@ -39,9 +39,19 @@ class MarkdownToHTMLConverter:
                 continue
 
             if line.startswith('#'):
+                # Считаем количество решеток в начале строки
+                level = len(line) - len(line.lstrip('#'))
                 heading = line.lstrip('#').strip()
                 heading = re.sub(r'Section \d+\.\s*', '', heading)
-                html_lines.append(f'<h2>{heading}</h2>')
+
+                # Определяем уровень заголовка
+                if level == 1:
+                    html_lines.append(f'<h2>{heading}</h2>')
+                elif level == 2:
+                    html_lines.append(f'<h3>{heading}</h3>')
+                elif level == 3:
+                    html_lines.append(f'<h4>{heading}</h4>')
+                # Можно продолжить для более глубоких уровней
                 continue
 
             # Обработка таблицы
@@ -342,6 +352,9 @@ class MarkdownToHTMLConverter:
                 except Exception as e:
                     print(f"Ошибка при обработке файла {file_path}: {e}")
 
+    async def _create_file_html(self, files_to_combine):
+        pass
+
     async def process_files(self, file_numbers=None):
         """
         Основной метод для обработки файлов
@@ -353,10 +366,27 @@ class MarkdownToHTMLConverter:
             'data/img/analysis_results.json')
 
         if file_numbers is None:
-            file_numbers = [3, 7, 11, 15, 19, 23, 27, 30, 34, 38, 42]
+            file_numbers = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers
+        ]
+
+        if not files_to_combine:
+            print("Не указаны номера файлов для обработки.")
+        else:
+            # Создаем HTML файл (как было раньше)
+            await self.combine_files_to_html(
+                files_to_combine, html_output_path, img_description=img_description)
+
+            # Дополнительно создаем TXT файл
+            await self._combine_files_to_txt(
+                files_to_combine, txt_output_path, img_description=img_description)
+
+        html_output_path = self.path_to_results + 'combined_with_quotes.html'
+
+        files_to_combine = [
+            f"{self.path_to_results}prompts_out_with_quotes/output_prompt_{num}.txt" for num in file_numbers
         ]
 
         if not files_to_combine:

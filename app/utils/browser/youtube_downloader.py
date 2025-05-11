@@ -54,6 +54,8 @@ class YouTubeDownloader:
                 links.append(f"https://www.youtube.com/watch?v={entry['id']}")
             if len(links) >= self.max_results:
                 break
+            
+        print(f"ЮТУБ ССЫЛКИ!! {links}")
         return links
 
     async def _download(self, links: list[str]) -> None:

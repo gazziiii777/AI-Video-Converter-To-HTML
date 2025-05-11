@@ -10,10 +10,13 @@ from app.utils.media.image_analyzer import ImageProcessor
 # from app.client.re1111 import ask
 from app.utils.browser.youtube_downloader import YouTubeDownloader
 from app.utils.browser.link_searcher import get_google_links
+from time import perf_counter
 
 
 async def main():
-    # # Инициализация компонентов
+    # start_time = perf_counter()  # Засекаем время начала
+
+    # # # Инициализация компонентов
     # transcriber = MediaTranscriber(
 
     #     model_name="base",
@@ -22,15 +25,16 @@ async def main():
 
     # client = ClaudeClient()
     # app = AppLogic(transcriber, client)
-    # # downloader_video = YouTubeDownloader()
-    # # await downloader_video.search_and_download("Название принтера")
+    # downloader_video = YouTubeDownloader()
+    # await downloader_video.search_and_download("Prusa Core One review")
 
-    # urls = await get_google_links("Prusa CORE One")
+    urls = await get_google_links("Prusa CORE One")
+    urls = await get_google_links("Prusa Core One in-depth review")
     # with open('links.txt', 'r') as file:
     #     first_url = file.readlines()
 
-    # # # Применяем скачивание только к первому URL для изображений
-    # # # Убираем возможные лишние пробелы или символы новой строки
+    # # # # Применяем скачивание только к первому URL для изображений
+    # # # # Убираем возможные лишние пробелы или символы новой строки
     # first_url = first_url[0].strip()
     # async with WebsiteParser(headless=True) as downloader:
     #     # Скачиваем текст с каждого сайта
@@ -43,9 +47,9 @@ async def main():
     #     # Скачиваем и фильтруем изображения только с первого сайта
     #     await downloader.download_images(first_url)
 
-    #     filter_results = await downloader.filter_images_by_size(
-    #         min_width=300,
-    #         min_height=300,
+    #     await downloader.filter_images_by_size(
+    #         min_width=350,
+    #         min_height=350,
     #         verbose=True
     #     )
 
@@ -69,9 +73,11 @@ async def main():
     #     json_file_path="prompts.json"
     # )
 
-    converter = MarkdownToHTMLConverter()
-    await converter.process_files()
+    # converter = MarkdownToHTMLConverter()
+    # await converter.process_files()
 
+    # end_time = perf_counter()  # Засекаем время окончания
+    # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
 
 if __name__ == "__main__":
     asyncio.run(main())

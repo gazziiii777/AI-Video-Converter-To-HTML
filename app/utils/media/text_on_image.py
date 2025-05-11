@@ -92,8 +92,8 @@ class TextOnImage:
     def calculate_positions(self):
         """Вычисляет позиции подложки и текста"""
         image_width, image_height = self.image.size
-        
-        self.box_x = self.bottom_margin
+
+        self.box_x = 0
         self.box_y = image_height - self.box_height - self.bottom_margin
 
         self.text_x = self.box_x + (self.box_width - self.text_width) // 2
@@ -109,10 +109,24 @@ class TextOnImage:
         self.draw.text((self.text_x, self.text_y), self.text,
                        font=self.font, fill=self.text_color)
 
-    def save_image(self, output_path: str = "output.jpg"):
+    def save_image(self, output_path: str):
         """Сохраняет результат"""
-        self.image.save(output_path)
-        print(f"Текст с подложкой добавлен! Результат: {output_path}")
+        try:
+            # Определяем формат по расширению файла
+            file_ext = os.path.splitext(output_path)[1].lower()
+
+            if file_ext == '.jpg' or file_ext == '.jpeg':
+                # Для JPEG убедимся, что изображение в режиме RGB
+                if self.image.mode != 'RGB':
+                    self.image = self.image.convert('RGB')
+                self.image.save(output_path, quality=95)
+            else:
+                # Для других форматов сохраняем как есть
+                self.image.save(output_path)
+
+            print(f"Текст с подложкой добавлен! Результат: {output_path}")
+        except Exception as e:
+            print(f"Ошибка при сохранении изображения: {e}")
 
     def process(self, new_filename: str = "output.jpg"):
         """Основной метод обработки. Принимает только имя файла (например, 'output.jpg')."""

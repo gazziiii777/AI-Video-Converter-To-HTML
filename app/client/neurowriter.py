@@ -80,6 +80,7 @@ class NeuroWriter:
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
+
     async def _get_project(self):
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -89,8 +90,7 @@ class NeuroWriter:
                 response_json = await response.json()
                 print(response_json)
                 return response_json[0]["project"]
-            
-            
+
     async def _create_query(self):
         payload = json.dumps({
             "project": await self._get_project(),
@@ -110,6 +110,7 @@ class NeuroWriter:
 
     async def import_content(self, text):
         query = await self._create_query()
+        await asyncio.sleep(10)
         payload = json.dumps({
             "query": query,
             "html": text,

@@ -110,8 +110,17 @@ class TextOnImage:
                        font=self.font, fill=self.text_color)
 
     def save_image(self, output_path: str):
-        """Сохраняет результат"""
+        """Сохраняет результат с возможным уменьшением размера, если он превышает 800px"""
         try:
+            # Проверяем размеры изображения
+            width, height = self.image.size
+            if width > 800 or height > 800:
+                # Вычисляем новые размеры с уменьшением в 1.5 раз
+                new_width = int(width / 1.5)
+                new_height = int(height / 1.5)
+                # Масштабируем изображение с сохранением пропорций
+                self.image = self.image.resize((new_width, new_height))
+                
             # Определяем формат по расширению файла
             file_ext = os.path.splitext(output_path)[1].lower()
 

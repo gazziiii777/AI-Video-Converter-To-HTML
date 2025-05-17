@@ -104,7 +104,7 @@ class WebsiteParser:
             if self.page:
                 await self.page.close()
 
-    async def save_clean_page_content(self, url: str) -> dict:
+    async def save_clean_page_content(self, url: str, query: str) -> dict:
         """
         Сохраняет очищенные HTML и текстовое содержимое страницы
 
@@ -117,7 +117,7 @@ class WebsiteParser:
 
         # Генерация имен файлов
         domain = re.sub(r'\W+', '_', url.split('//')[-1].split('/')[0])
-        base_name = f"{domain}"
+        base_name = f"{domain}_{query}"
 
         result = {
             'text_file': os.path.join(self.folder_path_txt, f"{base_name}.txt"),

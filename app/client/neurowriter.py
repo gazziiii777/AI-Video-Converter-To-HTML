@@ -94,7 +94,7 @@ class NeuroWriter:
     async def _create_query(self):
         payload = json.dumps({
             "project": await self._get_project(),
-            "keyword": "keyword",
+            "keyword": "pursa core one",
             "language": "English",
             "engine": "google.com"
         })
@@ -105,35 +105,90 @@ class NeuroWriter:
                 data=payload
             ) as response:
                 response_json = await response.json()
-                print(response_json)
                 return response_json["query"]
 
     async def import_content(self, text):
         query = await self._create_query()
-        await asyncio.sleep(10)
         payload = json.dumps({
             "query": query,
             "html": text,
-            "title": "Best Trail Running Shoes in 2024: A Complete Guide",
-            "description": "Discover the top trail running shoes of 2024, including models from Altra, Hoka, Nike, and more.",
         })
+        async with aiohttp.ClientSession() as session:
+            for attempt in range(5):
+                try:
+                    await asyncio.sleep(40)
+                    async with session.post(
+                        self.base_url + "/import-content",
+                        headers=self.headers,
+                        data=payload
+                    ) as response:
+                        if response.status != 200:
+                            print(
+                                f"Attempt {attempt + 1}: HTTP {response.status}")
+                            continue
 
-        for attempt in range(5):  # до 5 попыток
-            async with aiohttp.ClientSession() as session:
-                async with session.request(
-                    "POST",
-                    self.base_url + "/import-content",
-                    headers=self.headers,
-                    data=payload
-                ) as response:
+                        response_json = await response.json()
+                        print(f"Attempt {attempt + 1}: {response_json}")
+
+                        if response_json and response_json.get("status") == "ok":
+                            break
+
+                except Exception as e:
+                    print(f"Attempt {attempt + 1} failed with error: {e}")
+            # Проверяем статус запроса
+            async with session.post(
+                self.base_url + "/get-query",
+                headers=self.headers,
+                data=json.dumps({
+                    "query": query,
+                })
+            ) as response:
+                if response.status == 200:
                     response_json = await response.json()
-                    print(f"Attempt {attempt + 1}: {response_json}")
-
-                    if response_json is not None:
-                        return response_json
-
-            print("Response was None, retrying after delay...")
-            await asyncio.sleep(100)
-
+                    if response_json.get("status") == "ready":
+                        return response_json, query
         print("Failed after 5 attempts.")
         return None
+
+    async def import_title_and_desc(self, text, title, desc, query):
+        payload = json.dumps({
+            "query": query,
+            "html": text,
+            "title": title,
+            "description": desc,
+
+
+        })
+        async with aiohttp.ClientSession() as session:
+            for attempt in range(5):
+                try:
+                    async with session.post(
+                        self.base_url + "/import-content",
+                        headers=self.headers,
+                        data=payload
+                    ) as response:
+                        response_json = await response.json()
+                        print(response_json)
+                        if response_json.get("status") == 'ok':
+                            break
+
+                except Exception as e:
+                    print(f"Attempt {attempt + 1} failed with error: {e}")
+
+
+async def main():
+    # Инициализация клиента
+    writer = NeuroWriter()
+
+    # Пример текста для импорта
+    sample_text = """
+    <p>This is a test content that will be imported to NeuroWriter.</p>
+    <p>It contains HTML tags and some sample text.</p>
+    """
+
+    # Вызов функции импорта
+    result = await writer.import_content(sample_text)
+    print("Final result:", result)
+
+if __name__ == "__main__":
+    asyncio.run(main())

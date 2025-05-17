@@ -161,25 +161,26 @@ class MarkdownToHTMLConverter:
                 content += f.read()
         messages = [
             {"role": "user",
-                "content": f"Read the content about the following product {content}. I am writing an e-commerce page with the following sections: 1. What is the print quality and performance of the [Printer Name]? 2. Which materials can you use with the [Printer Name]? 3. What is the build volume of the [Printer Name]? 4. What printer controls are available on the [Printer Name]? 5. What connectivity options are available on the [Printer Name]? 6. What software is offered with the [Printer Name]? 7. What is the design and build quality of the [Printer Name]? 8. How reliable is the [Printer Name] and what maintenance does it require? 9. What comes included in the box with [Printer Name]? 10. What upgrades and accessories are available for the [Printer Name]? 11. How much does the [Printer Name] cost? 12. What support and warranty come with the [Printer Name]? EACH SECTION CONTAINS AN IMAGE AT THE END. Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce page. Your caption should: 1. Highlight a key feature or benefit of the product 2. Be technically accurate 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently Don’t write the text of the e-commerce product page itself. Only provide captions in a numbered list from 1 to 12. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities"}
+                "content": f"Read the content about the following product {content}. I am writing an e-commerce page with the following sections:\n1. What is the print quality and performance of the [Printer Name]?\n2. Which materials can you use with the [Printer Name]?\n3. What is the build volume of the [Printer Name]?\n4. What printer controls are available on the [Printer Name]?\n5. What connectivity options are available on the [Printer Name]?\n6. What software is offered with the [Printer Name]?\n7. What is the design and build quality of the [Printer Name]?\n8. What comes included in the box with [Printer Name]?\n9. What upgrades and accessories are available for the [Printer Name]?\n10. How reliable is the [Printer Name] and what maintenance does it require?\n11. What support and warranty come with the [Printer Name]?\n12. How much does the [Printer Name] cost?\nEACH SECTION CONTAINS AN IMAGE AT THE END. Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce page. Your caption should: 1. Highlight a key feature or benefit of the product. 2. Be technically accurate. 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently. Don't write the text of the e-commerce product page itself. Only provide captions in a numbered list from 1 to 12. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities."}
         ]
-        answer_without_quotes = await client.ask_claude(
-            max_tokens=3000,
+        answer_1 = await client.ask_claude(
+            max_tokens=4000,
             messages=messages,
             # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
         )
         messages.append(
-            {"role": "assistant", "content": answer_without_quotes})
+            {"role": "assistant", "content": answer_1})
         messages.append(
-            {"role": "user", "content": f"Now pick, which of the images in the file attached would be most appropriate for each section and corresponding caption. Note: once an image is selected, it cannot be used for another section.\nContent: {content}, images description: {img_description}\nWrite your answer in this form: photo_name - caption "})
+            {"role": "user", "content": f"You have a set of content sections (with captions) and a list of image descriptions. For each section-keeping the original order-select the single most appropriate image. Each image may only be used once.\n\nInputs:\n\nContent / Captions: {answer_1}\n\nImage Descriptions: {img_description}\n\nRequirements:\n\nMatch each caption to the one image that best illustrates it.\n\nPreserve the original numbering/order of the captions.\n\nDo not reuse any image.\n\nOutput exactly in this format (one line per item):\n[section number]. [photo_name] - [caption]"})
 
         answer = await client.ask_claude(
             max_tokens=3000,
             messages=messages,
             # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
         )
-
+        print(answer)
         result = await self._parse_input_data(answer)
+        print(result)
         return result
 
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
@@ -204,8 +205,6 @@ class MarkdownToHTMLConverter:
             </head>
             <body>
             """
-        a = await self._caption_and_image_for_section(img_description, output_files)
-        print(a)
 
         for i, file_path in enumerate(output_files):
 
@@ -218,14 +217,11 @@ class MarkdownToHTMLConverter:
 
             if i == 0:  # Только для первого файла
                 lines = content.split('\n')  # Разбиваем текст на строки
-                if lines:  # Если есть хотя бы одна строка
-                    # Обрабатываем только первую строку
-                    first_line = lines[0]
-                    if ':' in first_line:
-                        # Добавляем # в начало строки после обработки
-                        lines[0] = "# " + first_line.split(':', 1)[1].lstrip()
-                content = '\n'.join(lines)  # Собираем обратно
-                content += "\n\n"
+                if len(lines) > 1:  # Если есть хотя бы две строки (первая + остальное)
+                    lines = lines[1:]  # Удаляем первую строку
+                # Собираем обратно с двумя переносами
+                content = '\n'.join(lines) + "\n\n"
+
                 html_content += self.convert_md_to_html(
                     content) + self.youtube_iframe + "\n<hr>\n"
                 continue
@@ -284,11 +280,12 @@ class MarkdownToHTMLConverter:
                 #     html_content += self.convert_md_to_html(
                 #         content) + "\n<hr>\n"
                 # continue
+
                 processor1 = TextOnImage(
-                    filename=img_and_desk[i+1][0],
-                    text=img_and_desk[i+1][1],
+                    filename=img_and_desk[i-1][0],
+                    text=img_and_desk[i-1][1],
                 )
-                new_filename = img_and_desk[i+1][0].split('.')[0] + "_new.jpg"
+                new_filename = img_and_desk[i-1][0].split('.')[0] + "_new.jpg"
                 processor1.process(new_filename)
                 html_content += self.convert_md_to_html(
                     content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
@@ -366,7 +363,7 @@ class MarkdownToHTMLConverter:
             'data/img/analysis_results.json')
 
         if file_numbers is None:
-            file_numbers = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33]
+            file_numbers = [3, 6, 9, 12, 15, 18, 21, 24, 25, 27, 30, 33, 34]
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers
@@ -383,22 +380,22 @@ class MarkdownToHTMLConverter:
             await self._combine_files_to_txt(
                 files_to_combine, txt_output_path, img_description=img_description)
 
-        html_output_path = self.path_to_results + 'combined_with_quotes.html'
+        # html_output_path = self.path_to_results + 'combined_with_quotes.html'
 
-        files_to_combine = [
-            f"{self.path_to_results}prompts_out_with_quotes/output_prompt_{num}.txt" for num in file_numbers
-        ]
+        # files_to_combine = [
+        #     f"{self.path_to_results}prompts_out_with_quotes/output_prompt_{num}.txt" for num in file_numbers
+        # ]
 
-        if not files_to_combine:
-            print("Не указаны номера файлов для обработки.")
-        else:
-            # Создаем HTML файл (как было раньше)
-            await self.combine_files_to_html(
-                files_to_combine, html_output_path, img_description=img_description)
+        # if not files_to_combine:
+        #     print("Не указаны номера файлов для обработки.")
+        # else:
+        #     # Создаем HTML файл (как было раньше)
+        #     await self.combine_files_to_html(
+        #         files_to_combine, html_output_path, img_description=img_description)
 
-            # Дополнительно создаем TXT файл
-            await self._combine_files_to_txt(
-                files_to_combine, txt_output_path, img_description=img_description)
+        #     # Дополнительно создаем TXT файл
+        #     await self._combine_files_to_txt(
+        #         files_to_combine, txt_output_path, img_description=img_description)
 
 
 if __name__ == "__main__":

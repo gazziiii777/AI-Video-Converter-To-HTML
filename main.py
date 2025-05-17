@@ -11,25 +11,26 @@ from app.utils.media.image_analyzer import ImageProcessor
 from app.utils.browser.youtube_downloader import YouTubeDownloader
 from app.utils.browser.link_searcher import get_google_links
 from time import perf_counter
+from app.app_logic import AppLogic
 
 
 async def main():
     # start_time = perf_counter()  # Засекаем время начала
 
-    # # # Инициализация компонентов
-    # transcriber = MediaTranscriber(
+    # # # # Инициализация компонентов
+    transcriber = MediaTranscriber(
 
-    #     model_name="base",
-    #     language="en"
-    # )
+        model_name="base",
+        language="en"
+    )
 
-    # client = ClaudeClient()
-    # app = AppLogic(transcriber, client)
-    # downloader_video = YouTubeDownloader()
-    # await downloader_video.search_and_download("Prusa Core One review")
+    client = ClaudeClient()
+    app = AppLogic(transcriber, client)
+    # # # # downloader_video = YouTubeDownloader()
+    # # # # await downloader_video.search_and_download("Prusa Core One review")
 
-    urls = await get_google_links("Prusa CORE One")
-    urls = await get_google_links("Prusa Core One in-depth review")
+    # urls = await get_google_links("Prusa CORE One")
+
     # with open('links.txt', 'r') as file:
     #     first_url = file.readlines()
 
@@ -41,7 +42,7 @@ async def main():
     #     for url in urls:
     #         url = url.strip()  # Убираем лишние пробелы и символы новой строки
     #         print(f"Скачиваем контент с сайта: {url}")
-    #         await downloader.save_clean_page_content(url)
+    #         await downloader.save_clean_page_content(url, "Prusa CORE One")
 
     #     print(first_url)
     #     # Скачиваем и фильтруем изображения только с первого сайта
@@ -52,6 +53,24 @@ async def main():
     #         min_height=350,
     #         verbose=True
     #     )
+
+    # urls = await get_google_links("Prusa Core One in-depth review")
+    # async with WebsiteParser(headless=True) as downloader:
+    #         # Скачиваем текст с каждого сайта
+    #         for url in urls:
+    #             url = url.strip()  # Убираем лишние пробелы и символы новой строки
+    #             print(f"Скачиваем контент с сайта: {url}")
+    #             await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
+
+    #         # print(first_url)
+    #         # # Скачиваем и фильтруем изображения только с первого сайта
+    #         # await downloader.download_images(first_url)
+
+    #         # await downloader.filter_images_by_size(
+    #         #     min_width=350,
+    #         #     min_height=350,
+    #         #     verbose=True
+    #         # )
 
     # llm_client = GPTClient()
     # processor = ImageProcessor(llm_client)
@@ -73,11 +92,12 @@ async def main():
     #     json_file_path="prompts.json"
     # )
 
-    # converter = MarkdownToHTMLConverter()
-    # await converter.process_files()
+    converter = MarkdownToHTMLConverter()
+    await converter.process_files()
 
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
 
+    await app.neurowriter_logic()
 if __name__ == "__main__":
     asyncio.run(main())

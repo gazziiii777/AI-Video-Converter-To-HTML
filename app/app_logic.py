@@ -2,9 +2,12 @@ import os
 import json
 from typing import List, Dict
 from app.client.neurowriter import NeuroWriter
-from text import TITLE_PROMPT, DESC
+from text import TITLE_PROMPT, DESC_PROMPT, H1_PROMPT
 from typing import Any
 import re
+from bs4 import BeautifulSoup
+from typing import Optional
+import aiofiles
 
 
 class AppLogic:
@@ -74,14 +77,37 @@ class AppLogic:
 
     async def read_file(path: str, encoding: str = "utf-8") -> str:
         try:
-            with open(path, "r", encoding=encoding) as file:
-                return file.read()
-        except FileNotFoundError:
-            print(f"File {path} not found.")
-            return ""
+            with open("data/combined.html", "r", encoding="utf-8") as file:
+                sample_text = file.read()
+            return sample_text
         except Exception as e:
             print(f"Error reading file {path}: {e}")
             return ""
+
+    async def insert_h1_raw(self, filepath: str, h1_text: str) -> Optional[str]:
+        async with aiofiles.open(filepath, 'r', encoding='utf-8') as f:
+            html: str = await f.read()
+
+        body_index = html.lower().find("<body")
+        if body_index == -1:
+            print("Тег <body> не найден.")
+            return None
+
+        # Найти конец тега <body>
+        body_end = html.find(">", body_index)
+        if body_end == -1:
+            print("Некорректный тег <body>.")
+            return None
+
+        insert_position = body_end + 1
+        h1_tag = f"<h1>{h1_text}</h1>\n"
+        result_html = html[:insert_position] + h1_tag + html[insert_position:]
+
+        if filepath:
+            async with aiofiles.open(filepath, 'w', encoding='utf-8') as f:
+                await f.write(result_html)
+ 
+        return result_html
 
     async def format_and_ask(self, client: Any, prompt_template: str, values: str, label: str) -> None:
         messages = [
@@ -97,10 +123,12 @@ class AppLogic:
         except Exception as e:
             print(f"Error querying Claude for {label}: {e}")
 
+    async def remove_hash_prefix(self, line):
+        return line.lstrip('#') if line.startswith('#') else line
+
     async def neurowriter_logic(self) -> None:
         writer = NeuroWriter()
-        with open("data/combined.html", "r", encoding="utf-8") as file:
-            sample_text = file.read()
+        sample_text = await self.read_file()
 
         if not sample_text:
             return
@@ -110,9 +138,13 @@ class AppLogic:
             terms = content.get("terms", {})
             titles = '\n'.join(item['t'] for item in terms.get("title", []))
             desc = '\n'.join(item['t'] for item in terms.get("desc", []))
+            h1 = '\n'.join(item['t'] for item in terms.get("h1", []))
 
             title = await self.format_and_ask(self.client, TITLE_PROMPT, titles, "titles")
-            desc = await self.format_and_ask(self.client, DESC, desc, "desc")
+            desc = await self.format_and_ask(self.client, DESC_PROMPT, desc, "desc")
+            h1 = await self.format_and_ask(self.client, H1_PROMPT, h1, "h1")
+            h1 = await self.remove_hash_prefix(h1)
+            sample_text = await self.insert_h1_raw("data/combined.html", h1)
             await writer.import_title_and_desc(sample_text, title, desc, query)
         except Exception as e:
             print(f"Error in neurowriter_logic: {e}")

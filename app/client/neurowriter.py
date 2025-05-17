@@ -156,8 +156,6 @@ class NeuroWriter:
             "html": text,
             "title": title,
             "description": desc,
-
-
         })
         async with aiohttp.ClientSession() as session:
             for attempt in range(5):

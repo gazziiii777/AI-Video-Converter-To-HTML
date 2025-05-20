@@ -12,7 +12,7 @@ from app.service.browser.youtube_downloader import YouTubeDownloader
 from app.service.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
-from app.service_1.neurowriter import NeurowriterLogic
+from app.service.neurowriter.logic import NeurowriterLogic
 
 
 async def main():

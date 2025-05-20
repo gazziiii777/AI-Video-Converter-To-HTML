@@ -158,6 +158,7 @@ class NeuroWriter:
             "description": desc,
         })
         async with aiohttp.ClientSession() as session:
+            # Первый запрос (import-content)
             for attempt in range(5):
                 try:
                     async with session.post(
@@ -166,12 +167,23 @@ class NeuroWriter:
                         data=payload
                     ) as response:
                         response_json = await response.json()
-                        print(response_json)
                         if response_json.get("status") == 'ok':
                             break
-
                 except Exception as e:
                     print(f"Attempt {attempt + 1} failed with error: {e}")
+
+            # Второй запрос (get-query) — в той же сессии
+            async with session.post(
+                self.base_url + "/get-query",
+                headers=self.headers,
+                data=json.dumps({"query": query})
+            ) as response:
+                if response.status == 200:
+                    response_json = await response.json()
+                    if response_json.get("status") == "ready":
+                        return response_json
+
+
 
 
 async def main():

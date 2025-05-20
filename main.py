@@ -12,6 +12,7 @@ from app.utils.browser.youtube_downloader import YouTubeDownloader
 from app.utils.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
+from app.service.neurowriter import NeurowriterLogic
 
 
 async def main():
@@ -92,12 +93,12 @@ async def main():
     #     json_file_path="prompts.json"
     # )
 
-    converter = MarkdownToHTMLConverter()
-    await converter.process_files()
+    # converter = MarkdownToHTMLConverter()
+    # await converter.process_files()
 
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
-
-    await app.neurowriter_logic()
+    neruwriter = NeurowriterLogic(client)
+    await neruwriter.neurowriter_logic()
 if __name__ == "__main__":
     asyncio.run(main())

@@ -3,7 +3,7 @@ import os
 import json
 from app.client.claude import ClaudeClient
 from config import img_html_code
-from app.utils.media.text_on_image import TextOnImage
+from app.service.media.text_on_image import TextOnImage
 
 
 class MarkdownToHTMLConverter:

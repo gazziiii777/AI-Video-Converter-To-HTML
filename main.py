@@ -1,18 +1,18 @@
 import asyncio
 from app.app_logic import AppLogic
 # Предполагается, что эти классы определены
-from app.utils.media.transcriber import MediaTranscriber
+from app.service.media.transcriber import MediaTranscriber
 from app.client.claude import ClaudeClient  # в других файлах
 from app.client.gpt import GPTClient  # в других файлах
-from app.utils.export.markdown_to_html import MarkdownToHTMLConverter
-from app.utils.browser.website_parser import WebsiteParser
-from app.utils.media.image_analyzer import ImageProcessor
+from app.service.export.markdown_to_html import MarkdownToHTMLConverter
+from app.service.browser.website_parser import WebsiteParser
+from app.service.media.image_analyzer import ImageProcessor
 # from app.client.re1111 import ask
-from app.utils.browser.youtube_downloader import YouTubeDownloader
-from app.utils.browser.link_searcher import get_google_links
+from app.service.browser.youtube_downloader import YouTubeDownloader
+from app.service.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
-from app.service.neurowriter import NeurowriterLogic
+from app.service_1.neurowriter import NeurowriterLogic
 
 
 async def main():

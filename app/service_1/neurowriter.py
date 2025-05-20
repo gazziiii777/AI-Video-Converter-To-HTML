@@ -7,7 +7,7 @@ import re
 from bs4 import BeautifulSoup
 from typing import Optional
 import aiofiles
-from app.service.parser_neurowriter import ParserNeuronWriter
+from app.service_1.parser_neurowriter import ParserNeuronWriter
 
 
 class NeurowriterLogic:

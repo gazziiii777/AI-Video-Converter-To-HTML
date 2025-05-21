@@ -10,6 +10,8 @@ from PIL import Image
 import asyncio
 import re
 from logging_config import setup_logger
+from config import PATH_TO_IMG, PATH_TO_TXT
+
 
 logger = setup_logger('website_parser')
 
@@ -19,8 +21,8 @@ class WebsiteParser:
         self.headless = headless
         self.browser = None
         self.page = None
-        self.folder_path_img = "data/img"
-        self.folder_path_txt = "data/txt_output"
+        self.folder_path_img = PATH_TO_IMG
+        self.folder_path_txt = PATH_TO_TXT
 
     async def __aenter__(self):
         self.playwright = await async_playwright().start()
@@ -218,14 +220,14 @@ class WebsiteParser:
                         results['remaining'] += 1
 
                         # Увеличиваем изображение, если ширина < 300
-                        if width < 200 or height < 200:
-                            new_size = (width * 2, height * 2)
+                        if width > 800 or height > 800:
+                            new_size = (int(width / 1.5), int(height / 1.5))
                             resized_img = img.resize(new_size, Image.LANCZOS)
                             resized_img.save(file_path)
                             results['resized'] += 1
                             if verbose:
                                 logger.info(
-                                    f"Увеличено: {filename} → {new_size}")
+                                    f"Уменьшенно: {filename} → {new_size}")
 
             except Exception as e:
                 results['errors'] += 1

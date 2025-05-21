@@ -2,7 +2,7 @@ import re
 import os
 import json
 from app.client.claude import ClaudeClient
-from config import img_html_code
+from config import IMG_HTML_CODE, PATH_TO_RESULTS_HTML, PATH_TO_ANALYSIS_RESULTS, OUTPUT_HTML_NAME, FILES_FOR_HTML
 from app.service.media.text_on_image import TextOnImage
 
 
@@ -14,10 +14,12 @@ class MarkdownToHTMLConverter:
                 title="YouTube video player"
                 loading="lazy"
                 frameborder="0"
-                class="sc-c59b7c5-2 jNytQI">
+                class="sc-c59b7c5-2 jNytQI"
+                width="800"
+                height="450">
         </iframe>
         """
-        self.path_to_results = 'data/'
+        self.path_to_results = PATH_TO_RESULTS_HTML
 
     def convert_md_to_html(self, text):
         """Конвертирует Markdown-подобное форматирование в HTML"""
@@ -171,8 +173,9 @@ class MarkdownToHTMLConverter:
         messages.append(
             {"role": "assistant", "content": answer_1})
         messages.append(
-            {"role": "user", "content": f"You have a set of content sections (with captions) and a list of image descriptions. For each section-keeping the original order-select the single most appropriate image. Each image may only be used once.\n\nInputs:\n\nContent / Captions: {answer_1}\n\nImage Descriptions: {img_description}\n\nRequirements:\n\nMatch each caption to the one image that best illustrates it.\n\nPreserve the original numbering/order of the captions.\n\nDo not reuse any image.\n\nOutput exactly in this format (one line per item):\n[section number]. [photo_name] - [caption]"})
+            {"role": "user", "content": f"You have a set of content sections (with captions) and a list of image descriptions. For each section-keeping the original order-select the single most appropriate image. Each image may only be used once.\n\nInputs:\n\nContent / Captions: {answer_1}\n\nImage Descriptions: {img_description}\n\nRequirements:\n\nMatch each caption to the one image that best illustrates it.\n\nPreserve the original numbering/order of the captions.\n\nDo not reuse any image.\n\nOutput exactly in this format (one line per item): use only those images name that are in the Image Descriptions \n\n[section number]. [photo_name] - [caption]"})
 
+        print(img_description)
         answer = await client.ask_claude(
             max_tokens=3000,
             messages=messages,
@@ -288,7 +291,7 @@ class MarkdownToHTMLConverter:
                 new_filename = img_and_desk[i-1][0].split('.')[0] + "_new.jpg"
                 processor1.process(new_filename)
                 html_content += self.convert_md_to_html(
-                    content) + img_html_code.format(img=f"img/{new_filename}") + "\n<hr>\n"
+                    content) + IMG_HTML_CODE.format(img=f"img/{new_filename}") + "\n<hr>\n"
                 continue
             # html_content += self.convert_md_to_html(content) + "\n<hr>\n"
 
@@ -357,13 +360,13 @@ class MarkdownToHTMLConverter:
         Основной метод для обработки файлов
         :param file_numbers: список номеров файлов (например, [4, 8, 12])
         """
-        html_output_path = self.path_to_results + 'combined.html'
-        txt_output_path = self.path_to_results + 'combined.txt'
+        html_output_path = self.path_to_results + OUTPUT_HTML_NAME + '.html'
+        txt_output_path = self.path_to_results + OUTPUT_HTML_NAME + '.txt'
         img_description = self._load_json_data(
-            'data/img/analysis_results.json')
+            PATH_TO_ANALYSIS_RESULTS)
 
         if file_numbers is None:
-            file_numbers = [3, 6, 9, 12, 15, 18, 21, 24, 25, 27, 30, 33, 34]
+            file_numbers = FILES_FOR_HTML
 
         files_to_combine = [
             f"{self.path_to_results}prompts_out/output_prompt_{num}.txt" for num in file_numbers

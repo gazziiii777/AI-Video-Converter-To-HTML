@@ -1,5 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
+from config import PATH_TO_IMG, PATH_TO_FONTS
 
 
 class TextOnImage:
@@ -11,12 +12,12 @@ class TextOnImage:
         background_color: tuple = (0, 0, 0),
         padding: int = 10,
         font_size: int = 20,
-        font_path: str = "fonts/din-pro.ttf",
+        font_path: str = PATH_TO_FONTS,
         bottom_margin: int = 10,
         bottom_padding: int = 10,
         side_padding: int = 20,
         text_position_ratio: float = 1/3,
-        fixed_folder: str = "data/img/"
+        fixed_folder: str = PATH_TO_IMG + "/"
     ):
         """
         Класс для добавления текста с подложкой на изображение.
@@ -120,7 +121,7 @@ class TextOnImage:
                 new_height = int(height / 1.5)
                 # Масштабируем изображение с сохранением пропорций
                 self.image = self.image.resize((new_width, new_height))
-                
+
             # Определяем формат по расширению файла
             file_ext = os.path.splitext(output_path)[1].lower()
 
@@ -141,7 +142,6 @@ class TextOnImage:
         """Основной метод обработки. Принимает только имя файла (например, 'output.jpg')."""
         print(self.fixed_folder)
         output_path = self.fixed_folder + new_filename  # Полный путь
-
         self.load_image()
         self.load_font()
         self.calculate_dimensions()

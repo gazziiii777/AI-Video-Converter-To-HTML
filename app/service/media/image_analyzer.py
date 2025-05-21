@@ -4,16 +4,13 @@ from pathlib import Path
 from typing import List, Dict
 from PIL import Image
 import imagehash
-
-SUPPORTED_IMAGE_FORMATS = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
-
+from config import SUPPORTED_IMAGE_FORMATS, PATH_TO_IMG
 
 class ImageProcessor:
     def __init__(self, gpt_client):
         self.gpt_client = gpt_client
         self.batch_size = 3
-        self.SUPPORTED_IMAGE_FORMATS = [
-            '.png', '.jpg', '.jpeg', '.gif', '.webp']
+        self.SUPPORTED_IMAGE_FORMATS = SUPPORTED_IMAGE_FORMATS
 
     async def process_directory(self, image_dir: str, output_file: str):
         """Обрабатывает все изображения в директории"""
@@ -67,7 +64,7 @@ class ImageProcessor:
             
     async def delete_duplicates(self):
         # Папка с изображениями
-        folder = "data/img"
+        folder = PATH_TO_IMG
         hashes = {}
         duplicates = []
 

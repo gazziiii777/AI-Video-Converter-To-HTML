@@ -4,6 +4,7 @@ from anthropic import AsyncAnthropic, APIError, RateLimitError, InternalServerEr
 from core.config import settings
 import time
 # import json
+import config
 
 # Настройка прокси (аналогично вашему текущему коду)
 proxies = settings.PROXY
@@ -38,7 +39,8 @@ class ClaudeClient:
                 if file_name is not None:
                     with open(file_name, "w", encoding="utf-8") as f:
                         f.write(answer)
-
+                config.TOTAL_PRICE += (response.usage.input_tokens * 3 / 1_000_000) + \
+                    (response.usage.output_tokens * 15 / 1_000_000)
                 return answer
 
             except Exception as e:
@@ -85,19 +87,13 @@ class ClaudeClient:
                     }],
                 )
 
-                # answer = response.content[0].text
-                print(response.content)
-                if param is not None:
-                    answer = response.content[3].text
-                    print(answer)
-                else:
-                    answer = response.content[0].text
-                    print(answer)
+                answer = response.content[0].text
 
-                if file_name is not None:
-                    with open(file_name, "w", encoding="utf-8") as f:
-                        f.write(answer)
-
+                config.TOTAL_PRICE += (response.usage.input_tokens * 3 / 1_000_000) + \
+                    (response.usage.output_tokens * 15 / 1_000_000)
+                # if file_name is not None:
+                #     with open(f'{file_name}.txt', 'w', encoding='utf-8') as file:
+                #         file.write(str(answer))
                 return answer
 
             except Exception as e:

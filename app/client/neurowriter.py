@@ -94,7 +94,7 @@ class NeuroWriter:
     async def _create_query(self):
         payload = json.dumps({
             "project": await self._get_project(),
-            "keyword": "pursa core one",
+            "keyword": "prusa core one",
             "language": "English",
             "engine": "google.com"
         })
@@ -108,7 +108,8 @@ class NeuroWriter:
                 return response_json["query"]
 
     async def import_content(self, text):
-        query = await self._create_query()
+        # query = await self._create_query()
+        query = "a867d7cf1877391c"
         payload = json.dumps({
             "query": query,
             "html": text,
@@ -116,7 +117,7 @@ class NeuroWriter:
         async with aiohttp.ClientSession() as session:
             for attempt in range(5):
                 try:
-                    await asyncio.sleep(40)
+                    # await asyncio.sleep(40)
                     async with session.post(
                         self.base_url + "/import-content",
                         headers=self.headers,
@@ -182,8 +183,6 @@ class NeuroWriter:
                     response_json = await response.json()
                     if response_json.get("status") == "ready":
                         return response_json
-
-
 
 
 async def main():

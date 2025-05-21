@@ -3,6 +3,7 @@ import os
 from pydub import AudioSegment
 from moviepy import VideoFileClip
 from typing import Optional, List
+from config import PATH_TO_TXT, PATH_TO_SRT
 
 
 class MediaTranscriber:
@@ -118,12 +119,12 @@ class MediaTranscriber:
     ) -> None:
         """Сохраняет результаты транскрибации в файлы."""
         # Создаем папки если их нет
-        os.makedirs("data/txt_output", exist_ok=True)
-        os.makedirs("data/srt_output", exist_ok=True)
+        os.makedirs(PATH_TO_TXT, exist_ok=True)
+        os.makedirs(PATH_TO_SRT, exist_ok=True)
 
         # Полные пути к файлам
-        txt_path = os.path.join("data/txt_output", output_txt)
-        srt_path = os.path.join("data/srt_output", output_srt)
+        txt_path = os.path.join(PATH_TO_TXT, output_txt)
+        srt_path = os.path.join(PATH_TO_SRT, output_srt)
 
         # Сохраняем текст
         with open(txt_path, "w", encoding="utf-8") as f:

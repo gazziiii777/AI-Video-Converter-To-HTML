@@ -3,15 +3,16 @@ from core.config import settings
 import httpx
 from typing import List, Dict, Any
 import base64
+import config
 
-proxies = settings.PROXY  # Replace with actual proxy
-transport = httpx.AsyncHTTPTransport(proxy=proxies)
+# proxies = settings.PROXY  # Replace with actual proxy
+# transport = httpx.AsyncHTTPTransport(proxy=proxies)
 
-http_client = httpx.AsyncClient(transport=transport)
+# http_client = httpx.AsyncClient(transport=transport)
 
 client = openai.AsyncOpenAI(
     api_key=settings.OPENAI_API_KEY,
-    http_client=http_client  # передаем кастомный HTTP-клиент
+    # http_client=http_client  # передаем кастомный HTTP-клиент
 )
 
 
@@ -51,10 +52,12 @@ class GPTClient:
             messages=messages,
             max_tokens=2000
         )
+        config.TOTAL_PRICE += (response.usage.prompt_tokens * 2.5 / 1_000_000) + \
+            (response.usage.completion_tokens * 10 / 1_000_000)
+
         return response.choices[0].message.content
 
     def _encode_image(self, path: str) -> str:
         """Кодирует изображение в base64"""
         with open(path, "rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
-

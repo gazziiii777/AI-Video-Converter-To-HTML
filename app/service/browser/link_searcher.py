@@ -1,6 +1,6 @@
 import requests
 from core.config import settings
-from config import SERPAPI_BASE_URL, NUMBER_OF_LINKS_to_ANALYZE
+from config import SERPAPI_BASE_URL
 
 
 async def get_google_links(query):

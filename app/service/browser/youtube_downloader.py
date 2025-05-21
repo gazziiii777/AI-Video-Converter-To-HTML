@@ -1,6 +1,7 @@
 from yt_dlp import YoutubeDL
 import os
 import re
+from config import PATH_TO_VIDEOS
 
 
 class YouTubeDownloader:
@@ -18,7 +19,7 @@ class YouTubeDownloader:
     def __init__(self,
                  max_results: int = 5,
                  min_duration: int = 60,
-                 output_template: str = 'data/videos/%(title)s.%(ext)s',
+                 output_template: str = f'{PATH_TO_VIDEOS}/%(title)s.%(ext)s',
                  format: str = 'bestvideo+bestaudio/best',
                  merge_format: str = 'mp4'):
         self.max_results = max_results
@@ -54,7 +55,7 @@ class YouTubeDownloader:
                 links.append(f"https://www.youtube.com/watch?v={entry['id']}")
             if len(links) >= self.max_results:
                 break
-            
+
         print(f"ЮТУБ ССЫЛКИ!! {links}")
         return links
 
@@ -62,7 +63,7 @@ class YouTubeDownloader:
         """
         Скачивает список видео по ссылкам.
         """
-        folder = 'data/videos'
+        folder = PATH_TO_VIDEOS
         dl_opts = {
             'outtmpl': self.output_template,
             'format': self.format,

@@ -4,7 +4,6 @@ from typing import List, Dict
 from app.client.neurowriter import NeuroWriter
 from typing import Any
 import re
-from bs4 import BeautifulSoup
 from typing import Optional
 import aiofiles
 from app.service.neurowriter.parser import ParserNeuronWriter
@@ -94,6 +93,7 @@ class NeurowriterLogic:
             cleaned_answer = re.sub(
                 rf"^{label}:\s*", "", answer, flags=re.IGNORECASE)
             cleaned_answer = await self.remove_hash_prefix(cleaned_answer)
+            print(answer)
             return cleaned_answer
         except Exception as e:
             print(f"Error querying Claude for {label}: {e}")
@@ -130,10 +130,9 @@ class NeurowriterLogic:
                 "h2": value, "answer": messages[-1]["content"] if messages else "", "html": html}
             formatted_prompt = prompt_info["text"].format(
                 **{k: v for k, v in format_args.items() if k in prompt_info["text"]})
-
             # Добавляем промпт в историю сообщений
             messages.append({"role": "user", "content": formatted_prompt})
-            # Запрашиваем ответ у Claude
+
             answer = await client.ask_claude(
                 max_tokens=prompt_info["max_tokens"],
                 messages=messages,
@@ -144,8 +143,6 @@ class NeurowriterLogic:
             last_answer = answer
 
             messages.append({"role": "assistant", "content": answer})
-
-        print(messages)
         return last_answer
 
     async def remove_hash_prefix(self, line):
@@ -168,16 +165,14 @@ class NeurowriterLogic:
             h1_terms = '\n'.join(item['t'] for item in terms.get("h1", []))
             h2_terms = await parcer.analyze_terms("H2 / H3 terms", query)
 
-            title = await self.format_and_ask(self.client, "title", titles_terms)
-            desc = await self.format_and_ask(self.client, "desc", desc_terms)
-            h1 = await self.format_and_ask(self.client, "h1", h1_terms)
+            title = await self.format_and_ask(self.client, "title", titles_terms, "html", sample_text)
+            desc = await self.format_and_ask(self.client, "desc", desc_terms, "html", sample_text)
+            h1 = await self.format_and_ask(self.client, "h1", h1_terms, "html", sample_text)
             sample_text = await self.insert_h1_raw("data/combined.html", h1)
 
             await writer.import_title_and_desc(sample_text, title, desc, query)
 
             h2 = await self.h2_dialogue(self.client, h2_terms, sample_text)
-
-            # print(h2)
 
         except Exception as e:
             print(f"Error in neurowriter_logic: {e}")

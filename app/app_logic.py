@@ -7,6 +7,7 @@ import re
 from bs4 import BeautifulSoup
 from typing import Optional
 import aiofiles
+from config import FILES_FOR_WEB, PATH_TO_POMPTS_OUT
 
 
 class AppLogic:
@@ -48,17 +49,17 @@ class AppLogic:
                 if step.get("isEnabled", False) and step.get("type") == "message":
                     messages.append({"role": "user", "content": step["text"]})
 
-                    if prompt_counter in [10, 25, 26, 28, 31, 34]:
+                    if prompt_counter in FILES_FOR_WEB:
                         answer = await self.client.ask_claude_web(
                             max_tokens=step["max_tokens"],
                             messages=messages,
-                            file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
+                            file_name=f"{PATH_TO_POMPTS_OUT}/output_prompt_{prompt_counter}.txt"
                         )
                     else:
                         answer = await self.client.ask_claude(
                             max_tokens=step["max_tokens"],
                             messages=messages,
-                            file_name=f"data/prompts_out/output_prompt_{prompt_counter}.txt"
+                            file_name=f"{PATH_TO_POMPTS_OUT}/output_prompt_{prompt_counter}.txt"
                         )
                     # messages_remove_quotes = [
                     #     {"role": "user",

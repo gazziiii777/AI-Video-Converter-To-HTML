@@ -7,7 +7,7 @@ import re
 from bs4 import BeautifulSoup
 from typing import Optional
 import aiofiles
-from config import FILES_FOR_WEB, PATH_TO_POMPTS_OUT
+from config.config import FILES_FOR_WEB, PATH_TO_POMPTS_OUT
 
 
 class AppLogic:

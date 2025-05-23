@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
-from config import PATH_TO_IMG, PATH_TO_FONTS
+from config.config import PATH_TO_IMG, PATH_TO_FONTS
 
 
 class TextOnImage:

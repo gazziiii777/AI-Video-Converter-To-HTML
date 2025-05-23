@@ -3,7 +3,7 @@ import os
 from pydub import AudioSegment
 from moviepy import VideoFileClip
 from typing import Optional, List
-from config import PATH_TO_TXT, PATH_TO_SRT
+from config.config import PATH_TO_TXT, PATH_TO_SRT
 
 
 class MediaTranscriber:

@@ -1,7 +1,7 @@
 import json
 import requests
 import time
-from config import NEUROWRITER_BASE_URL
+from config.config import NEUROWRITER_BASE_URL
 import aiohttp
 import asyncio
 

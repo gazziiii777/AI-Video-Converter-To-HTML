@@ -2,7 +2,7 @@ import re
 import os
 import json
 from app.client.claude import ClaudeClient
-from config import IMG_HTML_CODE, PATH_TO_RESULTS_HTML, PATH_TO_ANALYSIS_RESULTS, OUTPUT_HTML_NAME, FILES_FOR_HTML
+from config.config import IMG_HTML_CODE, PATH_TO_RESULTS_HTML, PATH_TO_ANALYSIS_RESULTS, OUTPUT_HTML_NAME, FILES_FOR_HTML
 from app.service.media.text_on_image import TextOnImage
 
 
@@ -175,15 +175,46 @@ class MarkdownToHTMLConverter:
         messages.append(
             {"role": "user", "content": f"You have a set of content sections (with captions) and a list of image descriptions. For each section-keeping the original order-select the single most appropriate image. Each image may only be used once.\n\nInputs:\n\nContent / Captions: {answer_1}\n\nImage Descriptions: {img_description}\n\nRequirements:\n\nMatch each caption to the one image that best illustrates it.\n\nPreserve the original numbering/order of the captions.\n\nDo not reuse any image.\n\nOutput exactly in this format (one line per item): use only those images name that are in the Image Descriptions \n\n[section number]. [photo_name] - [caption]"})
 
-        print(img_description)
         answer = await client.ask_claude(
             max_tokens=3000,
             messages=messages,
             # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
         )
-        print(answer)
         result = await self._parse_input_data(answer)
-        print(result)
+        return result
+
+    async def _video_faunder(self, img_description, output_files):
+        client = ClaudeClient()
+        content = ''
+
+        for i, file_path in enumerate(output_files):
+
+            if not os.path.exists(file_path):
+                print(f"Файл {file_path} не найден, пропускаем...")
+                continue
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content += f.read()
+        messages = [
+            {"role": "user",
+                "content": f"Read the content about the following product {content}. I am writing an e-commerce page with the following sections:\n1. What is the print quality and performance of the [Printer Name]?\n2. Which materials can you use with the [Printer Name]?\n3. What is the build volume of the [Printer Name]?\n4. What printer controls are available on the [Printer Name]?\n5. What connectivity options are available on the [Printer Name]?\n6. What software is offered with the [Printer Name]?\n7. What is the design and build quality of the [Printer Name]?\n8. What comes included in the box with [Printer Name]?\n9. What upgrades and accessories are available for the [Printer Name]?\n10. How reliable is the [Printer Name] and what maintenance does it require?\n11. What support and warranty come with the [Printer Name]?\n12. How much does the [Printer Name] cost?\nEACH SECTION CONTAINS AN IMAGE AT THE END. Create a compelling, benefit-focused caption (3-5 words) for this 3D printer product image that will appear on an e-commerce page. Your caption should: 1. Highlight a key feature or benefit of the product. 2. Be technically accurate. 3. Start with a Verb. 4. No fluff. 5. Use UPPER CASE formatting consistently. Don't write the text of the e-commerce product page itself. Only provide captions in a numbered list from 1 to 12. Avoid generic descriptions and ensure your caption would help sell the product by emphasizing its unique advantages or capabilities."}
+        ]
+        answer_1 = await client.ask_claude(
+            max_tokens=4000,
+            messages=messages,
+            # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
+        )
+        messages.append(
+            {"role": "assistant", "content": answer_1})
+        messages.append(
+            {"role": "user", "content": f"You have a set of content sections (with captions) and a list of image descriptions. For each section-keeping the original order-select the single most appropriate image. Each image may only be used once.\n\nInputs:\n\nContent / Captions: {answer_1}\n\nImage Descriptions: {img_description}\n\nRequirements:\n\nMatch each caption to the one image that best illustrates it.\n\nPreserve the original numbering/order of the captions.\n\nDo not reuse any image.\n\nOutput exactly in this format (one line per item): use only those images name that are in the Image Descriptions \n\n[section number]. [photo_name] - [caption]"})
+
+        answer = await client.ask_claude(
+            max_tokens=3000,
+            messages=messages,
+            # file_name=f"data/prompts_out/photo_{prompt_counter}.txt"
+        )
+        result = await self._parse_input_data(answer)
         return result
 
     async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
@@ -355,15 +386,15 @@ class MarkdownToHTMLConverter:
     async def _create_file_html(self, files_to_combine):
         pass
 
-    async def process_files(self, file_numbers=None):
+    async def process_files(self, file_numbers=None, max_attempts=5):
         """
-        Основной метод для обработки файлов
+        Основной метод для обработки файлов с повторными попытками при ошибках
         :param file_numbers: список номеров файлов (например, [4, 8, 12])
+        :param max_attempts: максимальное количество попыток выполнения (по умолчанию 5)
         """
         html_output_path = self.path_to_results + OUTPUT_HTML_NAME + '.html'
         txt_output_path = self.path_to_results + OUTPUT_HTML_NAME + '.txt'
-        img_description = self._load_json_data(
-            PATH_TO_ANALYSIS_RESULTS)
+        img_description = self._load_json_data(PATH_TO_ANALYSIS_RESULTS)
 
         if file_numbers is None:
             file_numbers = FILES_FOR_HTML
@@ -374,14 +405,37 @@ class MarkdownToHTMLConverter:
 
         if not files_to_combine:
             print("Не указаны номера файлов для обработки.")
-        else:
-            # Создаем HTML файл (как было раньше)
-            await self.combine_files_to_html(
-                files_to_combine, html_output_path, img_description=img_description)
+            return False
 
-            # Дополнительно создаем TXT файл
-            await self._combine_files_to_txt(
-                files_to_combine, txt_output_path, img_description=img_description)
+        attempt = 0
+        last_error = None
+
+        while attempt < max_attempts:
+            attempt += 1
+            try:
+                # Создаем HTML файл
+                await self.combine_files_to_html(
+                    files_to_combine, html_output_path, img_description=img_description)
+
+                # Дополнительно создаем TXT файл
+                await self._combine_files_to_txt(
+                    files_to_combine, txt_output_path, img_description=img_description)
+
+                print(
+                    f"Файлы успешно обработаны (попытка {attempt}/{max_attempts})")
+                return True
+
+            except Exception as e:
+                last_error = e
+                print(
+                    f"Ошибка при обработке (попытка {attempt}/{max_attempts}): {str(e)}")
+                if attempt < max_attempts:
+                    print("Повторная попытка...")
+
+        print(
+            f"Достигнуто максимальное количество попыток ({max_attempts}). Обработка не удалась.")
+        print(f"Последняя ошибка: {str(last_error)}")
+        return False
 
         # html_output_path = self.path_to_results + 'combined_with_quotes.html'
 

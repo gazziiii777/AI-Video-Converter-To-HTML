@@ -1,9 +1,9 @@
 import openai
-from core.config import settings
+from core.settings import settings
 import httpx
 from typing import List, Dict, Any
 import base64
-import config
+import config.config as config
 
 # proxies = settings.PROXY  # Replace with actual proxy
 # transport = httpx.AsyncHTTPTransport(proxy=proxies)

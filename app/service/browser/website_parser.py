@@ -9,8 +9,8 @@ from playwright.async_api import async_playwright
 from PIL import Image
 import asyncio
 import re
-from logging_config import setup_logger
-from config import PATH_TO_IMG, PATH_TO_TXT
+from config.logging_config import setup_logger
+from config.config import PATH_TO_IMG, PATH_TO_TXT
 
 
 logger = setup_logger('website_parser')

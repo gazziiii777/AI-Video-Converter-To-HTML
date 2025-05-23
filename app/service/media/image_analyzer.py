@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List, Dict
 from PIL import Image
 import imagehash
-from config import SUPPORTED_IMAGE_FORMATS, PATH_TO_IMG
+from config.config import SUPPORTED_IMAGE_FORMATS, PATH_TO_IMG
 
 class ImageProcessor:
     def __init__(self, gpt_client):

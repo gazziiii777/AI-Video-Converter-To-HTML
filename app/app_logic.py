@@ -1,7 +1,7 @@
 import os
 import json
 from typing import List, Dict
-from app.client.neurowriter import NeuroWriter
+from app.client.neuronwriter import Neuronwriter
 from typing import Any
 import re
 from bs4 import BeautifulSoup

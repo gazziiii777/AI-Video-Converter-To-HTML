@@ -3,7 +3,7 @@ from playwright.async_api import async_playwright
 import re
 
 
-class ParserNeuronWriter:
+class ParserNeuronwriter:
     def __init__(self):
         self.cookies = [
             {
@@ -75,7 +75,7 @@ class ParserNeuronWriter:
         return "\n".join(cleaned_results)
 
 
-# Пример использования
-if __name__ == "__main__":
-    analyzer = ParserNeuronWriter()
-    asyncio.run(analyzer.analyze_terms("H1 terms", "0c64fd823bf9ba6c"))
+# # Пример использования
+# if __name__ == "__main__":
+#     analyzer = ParserNeuronWriter()
+#     asyncio.run(analyzer.analyze_terms("H1 terms", "0c64fd823bf9ba6c"))

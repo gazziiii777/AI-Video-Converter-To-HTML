@@ -6,6 +6,6 @@ inputs/*
 .env
 **/__pycache__/
 /prompts.json
-/neurowriter_promts.json
+/neuronwriter_prompts.json
 data/
 links.txt

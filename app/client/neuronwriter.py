@@ -72,7 +72,7 @@ BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
 # print(f"SEO-рекомендации: {result}")
 # coding=utf-8
 
-class NeuroWriter:
+class Neuronwriter:
     def __init__(self):
         self.base_url = NEUROWRITER_BASE_URL
         self.headers = {
@@ -109,7 +109,8 @@ class NeuroWriter:
 
     async def import_content(self, text):
         # query = await self._create_query()
-        query = "a867d7cf1877391c"
+        # query = "a867d7cf1877391c"
+        query = "f694bb391e88d30c"
         payload = json.dumps({
             "query": query,
             "html": text,
@@ -185,19 +186,19 @@ class NeuroWriter:
                         return response_json
 
 
-async def main():
-    # Инициализация клиента
-    writer = NeuroWriter()
+# async def main():
+#     # Инициализация клиента
+#     writer = NeuroWriter()
 
-    # Пример текста для импорта
-    sample_text = """
-    <p>This is a test content that will be imported to NeuroWriter.</p>
-    <p>It contains HTML tags and some sample text.</p>
-    """
+#     # Пример текста для импорта
+#     sample_text = """
+#     <p>This is a test content that will be imported to NeuroWriter.</p>
+#     <p>It contains HTML tags and some sample text.</p>
+#     """
 
-    # Вызов функции импорта
-    result = await writer.import_content(sample_text)
-    print("Final result:", result)
+#     # Вызов функции импорта
+#     result = await writer.import_content(sample_text)
+#     print("Final result:", result)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# if __name__ == "__main__":
+#     asyncio.run(main())

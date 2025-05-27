@@ -1,32 +1,40 @@
-# logger_config.py
 import logging
 from logging.handlers import RotatingFileHandler
-
+import os
 
 def setup_logger(name):
-    # Создаем логгер
+    # Создаем папку для логов, если её нет
+    if not os.path.exists('logs'):
+        os.makedirs('logs')
+
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)  # Минимальный уровень логирования
+    logger.setLevel(logging.DEBUG)
 
-    # Формат сообщений
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    # Обработчик для записи в файл
+    # Если имя логгера == "special" → пишем в special.log
+    if name in ['Neuronwriter-Prompt']:
+        log_file = "logs/prompts.log"
+    elif name in ['Neuronwriter-Answer']:
+        log_file = "logs/answers.log"
+    else:
+        # Все остальные логи → в common.log
+        log_file = "logs/app.log"
+
+    # Обработчик для записи в нужный файл
     file_handler = RotatingFileHandler(
-        'logs/app.log',
-        maxBytes=1024*1024*100,  # 1 MB
-        backupCount=3,
+        log_file,
+        maxBytes=1024 * 1024 * 10,  # 10 MB
+        backupCount=5,
         encoding='utf-8'
     )
     file_handler.setFormatter(formatter)
 
-    # Обработчик для вывода в консоль
+    # Обработчик для консоли (опционально)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
 
-    # Добавляем обработчики к логгеру
+    # Добавляем обработчики
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 

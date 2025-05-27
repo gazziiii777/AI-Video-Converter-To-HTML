@@ -12,7 +12,7 @@ from app.service.browser.youtube_downloader import YouTubeDownloader
 from app.service.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
-from app.service.neurowriter.logic import NeurowriterLogic
+from app.service.neuronwriter.logic import NeuronwriterLogic
 import config.config
 from config.config import PATH_TO_IMG, PATH_TO_ANALYSIS_RESULTS
 from app.service.browser.youtube_downloader import YouTubeDownloader
@@ -48,7 +48,7 @@ async def main():
     #     model_name="base",
     #     language="en"
     # )
-    # client = ClaudeClient()
+    client = ClaudeClient()
     # # app = AppLogic(transcriber, client)
     # # # # # # downloader_video = YouTubeDownloader()
     # # # # # await downloader_video.search_and_download("Prusa Core One review")
@@ -121,14 +121,14 @@ async def main():
     # print(config.TOTAL_PRICE)
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
-    # neruwriter = NeurowriterLogic(client)
-    # await neruwriter.neurowriter_logic()
-    b = await YouTubeDownloader.parse_channel_videos()
-    c = await YouTubeDownloader().search("Prusa CORE One Review", True)
-    # c = await YouTubeDownloader().search_and_download("Prusa CORE One Review")
-    print(b)
-    print(c)
-    
+    neuronwriter = NeuronwriterLogic(client)
+    await neuronwriter.neuronwriter_logic()
+    # b = await YouTubeDownloader().parse_channel_videos()
+    # c = await YouTubeDownloader().search("Prusa CORE One Review", True)
+    # # c = await YouTubeDownloader().search_and_download("Prusa CORE One Review")
+    # print(b)
+    # print(c)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

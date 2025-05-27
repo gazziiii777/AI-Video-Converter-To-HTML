@@ -12,6 +12,7 @@ FILES_FOR_HTML = [3, 6, 9, 12, 15, 18, 21, 24, 25, 27, 30, 33, 34]
 FILES_FOR_WEB = [10, 25, 26, 28, 31, 34]
 
 TOTAL_PRICE = 0.0
+H2 = None
 
 PATH_TO_RESULTS_HTML = "data/"
 PATH_TO_IMG = "data/img"

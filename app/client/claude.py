@@ -5,7 +5,8 @@ from core.settings import settings
 import time
 # import json
 import config.config as config
-
+import asyncio
+ 
 # Настройка прокси (аналогично вашему текущему коду)
 proxies = settings.PROXY
 transport = httpx.AsyncHTTPTransport(proxy=proxies)
@@ -62,11 +63,10 @@ class ClaudeClient:
             "Unknown error after retries")
 
     async def ask_claude_web(self, max_tokens, messages, file_name=None, param=None):
-        """Запрашивает ответ у Claude с историей диалога с автоматическими повторами при ошибках"""
+        """Запрашивает ответ у Claude с веб-поиском"""
         max_retries = 10
         claude_messages = self._convert_to_claude_format(messages)
-        last_exception = None
-
+        
         for attempt in range(1, max_retries + 1):
             try:
                 response = await anthropic_client.messages.create(
@@ -76,43 +76,41 @@ class ClaudeClient:
                     tools=[{
                         "type": "web_search_20250305",
                         "name": "web_search",
-                        "max_uses": 5,
-                          "user_location": {
-                              "type": "approximate",
-                              "city": "San Francisco",
-                              "region": "California",
-                              "country": "US",
-                              "timezone": "America/Los_Angeles"
-                          }
+                        "max_uses": 3,
+                        "user_location": {
+                            "type": "approximate",
+                            "city": "San Francisco",
+                            "region": "California",
+                            "country": "US",
+                            "timezone": "America/Los_Angeles"
+                        }
                     }],
+                    system="Отвечай кратко без описания процесса поиска"
                 )
 
-                answer = response.content[0].text
-
-                config.TOTAL_PRICE += (response.usage.input_tokens * 3 / 1_000_000) + \
-                    (response.usage.output_tokens * 15 / 1_000_000)
-                # if file_name is not None:
-                #     with open(f'{file_name}.txt', 'w', encoding='utf-8') as file:
-                #         file.write(str(answer))
+                # Извлекаем только текстовые блоки с ответом
+                answer_blocks = [
+                    block.text for block in response.content 
+                    if block.type == 'text'
+                ]
+                answer = '\n'.join(answer_blocks)
+                # answer = response.content[0].text
+                # Расчет стоимости
+                input_cost = response.usage.input_tokens * 3 / 1_000_000
+                output_cost = response.usage.output_tokens * 15 / 1_000_000
+                config.TOTAL_PRICE += input_cost + output_cost
                 return answer
 
             except Exception as e:
-                last_exception = e
+                # Обработка ошибок и повторные попытки
                 if attempt < max_retries:
-                    wait_time = 70
-                    print(
-                        f"Attempt {attempt}/{max_retries} failed. Error: {str(e)}. Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                continue
+                    print(f"Attempt {attempt} failed: {str(e)}")
+                    await asyncio.sleep(70 ** attempt)
+                else:
+                    raise
 
-            except Exception as e:
-                print(f"Unexpected error calling Claude API: {str(e)}")
-                raise
+        return None
 
-        print(
-            f"All {max_retries} attempts failed. Last error: {str(last_exception)}")
-        raise last_exception if last_exception else Exception(
-            "Unknown error after retries")
 
     async def ask_claude_web_test(self, max_tokens: int, messages: list[dict], file_name=None) -> str:
         response = await anthropic_client.messages.create(

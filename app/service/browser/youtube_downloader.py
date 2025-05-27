@@ -86,7 +86,7 @@ class YouTubeDownloader:
             if len(results) >= self.max_results:
                 break
 
-        print(f"ЮТУБ ССЫЛКИ!! {results}")
+        # print(f"ЮТУБ ССЫЛКИ!! {results}")
         return results
 
     async def search_and_download(self, query: str) -> None:
@@ -102,8 +102,7 @@ class YouTubeDownloader:
             print(f"{idx}. {link}")
         await self._download(links)
 
-    @staticmethod
-    async def parse_channel_videos() -> list[dict]:
+    async def parse_channel_videos(self) -> list[dict]:
         """
         Парсит видео с канала YouTube (до 200 штук, если YouTube не ограничивает).
         """

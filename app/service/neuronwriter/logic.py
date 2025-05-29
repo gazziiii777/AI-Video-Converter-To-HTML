@@ -51,6 +51,43 @@ class NeuronwriterLogic:
             return match.group(1).strip()
         return ""
 
+    def save_html(self, soup):
+        with open(PATH_TO_RESULTS_HTML + OUTPUT_HTML_NAME + ".html", 'w', encoding='utf-8') as file:
+            file.write(str(soup))
+
+    # async def replace_sentence_in_file(slef, html, ):
+    #     """
+    #     Заменяет предложение в файле, даже если оно разбито на несколько строк.
+    #     Удаляет пробелы по бокам при сравнении.
+
+    #     :param file_path: путь к файлу
+    #     :param old_sentence: предложение для поиска (пробелы по бокам игнорируются)
+    #     :param new_sentence: предложение для замены
+    #     """
+    #     try:
+    #         # with open(file_path, 'r', encoding='utf-8') as file:
+    #         #     content = file.read()
+
+    #         # Удаляем пробелы по бокам для сравнения
+    #         normalized_old_sentence = ' '.join(old_sentence.split())
+
+    #         if normalized_old_sentence in html:
+    #             # Заменяем с сохранением оригинальных пробелов и переносов
+    #             updated_content = content.replace(old_sentence, new_sentence)
+
+    #             with open(file_path, 'w', encoding='utf-8') as file:
+    #                 file.write(updated_content)
+
+    #             print(
+    #                 f"Предложение '{old_sentence}' успешно заменено на '{new_sentence}'.")
+    #         else:
+    #             print(f"Предложение '{old_sentence}' не найдено в файле.")
+
+    #     except FileNotFoundError:
+    #         print(f"Файл '{file_path}' не найден.")
+    #     except Exception as e:
+    #         print(f"Произошла ошибка: {e}")
+
     async def get_prompt_by_name(self, prompt_name):
         return next((p for p in self.data['prompts'] if p['name'] == prompt_name), None)
 
@@ -134,6 +171,7 @@ class NeuronwriterLogic:
         lines = text.split('\n')
         not_included = []
         h2_phrases = []
+        included = []
 
         for line in lines:
             if '|' in line:  # Если это строка таблицы
@@ -145,9 +183,10 @@ class NeuronwriterLogic:
                     phrase = parts[0].strip()
                     h2 = parts[2].strip()
                     # not_included.append("phrase")
-
+                    included.append(phrase)
                     h2_phrases.append(f"{phrase} h2: {h2}")
 
+        config.H2_INCLUDED = ", ".join(included)
         return ", ".join(not_included), h2_phrases
 
     async def parse_table_string(self, table_string):
@@ -175,6 +214,30 @@ class NeuronwriterLogic:
             result.append(row_dict)
         config.H3_DATA = result
 
+        return result, None
+
+    async def parse_step_8(self, table_string):
+        lines = table_string.split('\n')
+
+        # Удаляем пустые строки и строки, состоящие только из разделителей (с возможными пробелами)
+        data_lines = [line.strip() for line in lines
+                      if line.strip() and not line.strip().replace('-', '').replace('|', '').replace(' ', '').strip() == '']
+
+        result = []
+
+        # Пропускаем строку с заголовками (первая строка после очистки)
+        for line in data_lines[1:]:
+            # Разделяем строку по символу |, убираем лишние пробелы и фильтруем пустые значения
+            columns = [col.strip() for col in line.split('|') if col.strip()]
+
+            # Создаем словарь для текущей строки
+            row_dict = {
+                'keyword': columns[0] if len(columns) > 0 else '',
+                'old': columns[1] if len(columns) > 1 else '',
+                'new': columns[2] if len(columns) > 2 else '',
+            }
+
+            result.append(row_dict)
         return result, None
 
     async def process_html_with_array(self, html):
@@ -207,8 +270,9 @@ class NeuronwriterLogic:
                 for element in new_elements:
                     h2_tag.insert_before(element)
 
-        with open(PATH_TO_RESULTS_HTML + OUTPUT_HTML_NAME + ".html", 'w', encoding='utf-8') as file:
-            file.write(str(soup))
+        self.save_html(soup)
+        # with open(PATH_TO_RESULTS_HTML + OUTPUT_HTML_NAME + ".html", 'w', encoding='utf-8') as file:
+        #     file.write(str(soup))
 
     async def h2_dialogue(self, client: Any, value: str, html: str) -> Optional[Any]:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8.
@@ -228,7 +292,10 @@ class NeuronwriterLogic:
 
         # Обработка шага 8 (если есть данные из шага 7)
         if last_answer:
-            await self._process_final_step(client, html, last_answer)
+            await self._process_step_8(client, html, last_answer)
+
+        if config.H2_INCLUDED != "":
+            await self._process_main_steps(client, value, html, messages, [9])
 
         return last_answer
 
@@ -241,19 +308,28 @@ class NeuronwriterLogic:
             if not prompt_info:
                 continue
 
-            formatted_prompt = self._format_prompt(
-                prompt_info, value, html, messages)
+            if step_id == 9:
+                formatted_prompt = self._format_prompt(
+                    prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED)
+            else:
+                formatted_prompt = self._format_prompt(
+                    prompt_info, value, html, messages)
+
             messages.append({"role": "user", "content": formatted_prompt})
 
             answer = await self._get_claude_response(client, step_id, prompt_info, messages)
             self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
             answer, config.H2 = await self._process_special_steps(step_id, answer)
+
             if answer == "" and step_id == 6:
                 return None
 
             if step_id == 7:
                 last_answer = answer  # Сохраняем для использования в шаге 8
 
+            if step_id == 9:
+
+                print(answer)
             # if config.H2 is not None and step_id == 8:
             #     pass
 
@@ -261,7 +337,7 @@ class NeuronwriterLogic:
 
         return last_answer
 
-    async def _process_final_step(self, client: Any, html: str, last_answer: Any) -> None:
+    async def _process_step_8(self, client: Any, html: str, last_answer: Any) -> None:
         """Обрабатывает финальный шаг диалога (8)."""
         prompt_info = await self.get_prompt_by_id(8)
         if not prompt_info:
@@ -282,14 +358,21 @@ class NeuronwriterLogic:
 
         await self.process_html_with_array(html)
 
-    def _format_prompt(self, prompt_info: dict, value: str, html: str, messages: list, h3: str = "") -> str:
+    def _format_prompt(self,
+                       prompt_info: dict = None,
+                       value: str = None,
+                       html: str = None,
+                       messages: list = None,
+                       h3: str = "",
+                       KEYWORDS: str = "") -> str:
         """Форматирует промпт с подстановкой переменных."""
         format_args = {
             "h2": value,
             "answer": messages[-1]["content"] if messages else "",
             "html": html,
             "h3": h3,
-            "PRODUCT_NAME": "Prusa Core One"
+            "PRODUCT_NAME": "Prusa Core One",
+            "KEYWORDS": KEYWORDS
         }
         return prompt_info["text"].format(
             **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
@@ -323,6 +406,8 @@ class NeuronwriterLogic:
             return await self.get_not_included_keywords(answer)
         if step_id == 7:
             return await self.parse_table_string(answer)
+        if step_id == 8:
+            return await self.parse_step_8(answer)
         return answer, None
 
     async def remove_hash_prefix(self, line):

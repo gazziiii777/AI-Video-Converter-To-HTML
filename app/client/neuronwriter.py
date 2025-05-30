@@ -110,7 +110,7 @@ class Neuronwriter:
     async def import_content(self, text):
         # query = await self._create_query()
         # query = "a867d7cf1877391c"
-        query = "f694bb391e88d30c"
+        query = "06410d03cb5baa1f"
         payload = json.dumps({
             "query": query,
             "html": text,

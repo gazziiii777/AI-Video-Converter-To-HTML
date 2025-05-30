@@ -9,3 +9,4 @@ inputs/*
 /neuronwriter_prompts.json
 data/
 links.txt
+app/service/neuronwriter/logic_1.py

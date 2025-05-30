@@ -6,7 +6,11 @@ import time
 # import json
 import config.config as config
 import asyncio
- 
+from config.logging_config import setup_logger
+
+
+logger = setup_logger('Claude')
+
 # Настройка прокси (аналогично вашему текущему коду)
 proxies = settings.PROXY
 transport = httpx.AsyncHTTPTransport(proxy=proxies)
@@ -48,8 +52,10 @@ class ClaudeClient:
                 last_exception = e
                 if attempt < max_retries:
                     wait_time = 70
-                    print(
+                    logger.error(
                         f"Attempt {attempt}/{max_retries} failed. Error: {str(e)}. Retrying in {wait_time} seconds...")
+
+                    logger.debug(claude_messages)
                     time.sleep(wait_time)
                 continue
 
@@ -66,7 +72,7 @@ class ClaudeClient:
         """Запрашивает ответ у Claude с веб-поиском"""
         max_retries = 10
         claude_messages = self._convert_to_claude_format(messages)
-        
+
         for attempt in range(1, max_retries + 1):
             try:
                 response = await anthropic_client.messages.create(
@@ -90,7 +96,7 @@ class ClaudeClient:
 
                 # Извлекаем только текстовые блоки с ответом
                 answer_blocks = [
-                    block.text for block in response.content 
+                    block.text for block in response.content
                     if block.type == 'text'
                 ]
                 answer = '\n'.join(answer_blocks)
@@ -110,7 +116,6 @@ class ClaudeClient:
                     raise
 
         return None
-
 
     async def ask_claude_web_test(self, max_tokens: int, messages: list[dict], file_name=None) -> str:
         response = await anthropic_client.messages.create(

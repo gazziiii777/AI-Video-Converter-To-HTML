@@ -3,7 +3,7 @@ import config.config as config
 
 class TableParser:
     @staticmethod
-    async def parse_keywords_table(table_string: str) -> tuple:
+    async def parse_keywords_table(table_string: str, number: int = "") -> tuple:
         """Парсит таблицу с ключевыми словами"""
         lines = [line.strip() for line in table_string.split('\n')
                  if line.strip() and not line.strip().replace('-', '').replace('|', '').replace(' ', '').strip() == '']
@@ -21,6 +21,9 @@ class TableParser:
                     included.append(parts[0].strip())
                     h2_phrases.append(
                         f"{parts[0].strip()} h2: {parts[2].strip()}")
+
+        if number == 12 and len(included) > 0:
+            config.BASIC_INCLUDED = ", ".join(included)
 
         if len(included) > 0:
             config.H2_INCLUDED = ", ".join(included)

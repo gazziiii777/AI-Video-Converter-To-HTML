@@ -81,6 +81,23 @@ class NeuronwriterLogic:
 
         return last_answer
 
+    async def basic_and_extended_dialogue(self, value: str, html: str) -> Optional[Any]:
+        """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
+        messages = []
+        last_answer = None
+
+        # Обработка основных шагов диалога (4-7)
+        last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14])
+
+        # # Обработка шага 8 (если есть данные из шага 7)
+        # if last_answer:
+        #     await self._process_step_8(html, last_answer)
+
+        # if config.H2_INCLUDED:
+        #     await self._process_main_steps(value, html, messages, [9])
+
+        # return last_answer
+
     async def _process_main_steps(self, value: str, html: str, messages: list, steps: list) -> Optional[Any]:
         """Обрабатывает основные шаги диалога"""
         last_answer = None
@@ -93,6 +110,12 @@ class NeuronwriterLogic:
             if step_id == 9:
                 formatted_prompt = self._format_prompt(
                     prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED)
+            elif step_id == 10:
+                formatted_prompt = self._format_prompt(
+                    prompt_info=prompt_info, text=value, html=html, messages=messages)
+            elif step_id == 14:
+                formatted_prompt = self._format_prompt(
+                    prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
             else:
                 formatted_prompt = self._format_prompt(
                     prompt_info, value, html, messages)
@@ -106,7 +129,6 @@ class NeuronwriterLogic:
 
             if step_id == 9 and answer:
                 await self.html_modifier.replace_h2_in_file(html, answer)
-                
 
             if answer is None and step_id == 6:
                 return None
@@ -142,8 +164,14 @@ class NeuronwriterLogic:
 
         await self.html_modifier.process_html_with_h3(html)
 
-    def _format_prompt(self, prompt_info: dict, value: str, html: str,
-                       messages: list, h3: str = "", KEYWORDS: str = "") -> str:
+    def _format_prompt(self, prompt_info: dict = None,
+                       value: str = None,
+                       html: str = None,
+                       messages: list = None,
+                       h3: str = "",
+                       KEYWORDS: str = "",
+                       text: str = "",
+                       text_included: str = "") -> str:
         """Форматирует промпт с подстановкой переменных"""
         format_args = {
             "h2": value,
@@ -151,7 +179,9 @@ class NeuronwriterLogic:
             "html": html,
             "h3": h3,
             "PRODUCT_NAME": "Prusa Core One",
-            "KEYWORDS": KEYWORDS
+            "KEYWORDS": KEYWORDS,
+            "text": text,
+            "text_included": text_included
         }
         return prompt_info["text"].format(
             **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
@@ -159,16 +189,18 @@ class NeuronwriterLogic:
 
     async def _get_claude_response(self, step_id: int, prompt_info: dict, messages: list) -> str:
         """Получает ответ от Claude API в зависимости от шага"""
-        if step_id in [4, 5]:
+        if step_id in [4, 5, 10, 11, 12]:
             answer = await self.client.ask_claude(
                 max_tokens=prompt_info["max_tokens"],
                 messages=messages,
             )
         else:
             answer = await self.client.ask_claude_web(
-                max_tokens=2000,
+                max_tokens=prompt_info["max_tokens"],
                 messages=messages,
             )
+        # if step_id == 14:
+        #     return answer
 
         return self.html_processor.extract_answer(answer)
 
@@ -179,8 +211,8 @@ class NeuronwriterLogic:
 
     async def _process_special_steps(self, step_id: int, answer: str) -> tuple:
         """Обрабатывает специальные шаги, требующие дополнительной обработки"""
-        if step_id == 6:
-            return await self.table_parser.parse_keywords_table(answer)
+        if step_id in [6, 12]:
+            return await self.table_parser.parse_keywords_table(answer, step_id)
         elif step_id == 7:
             return await self.table_parser.parse_h3_table(answer)
         elif step_id == 9:
@@ -211,7 +243,12 @@ class NeuronwriterLogic:
             #                          for item in terms.get("title", []))
             # desc_terms = '\n'.join(item['t'] for item in terms.get("desc", []))
             # h1_terms = '\n'.join(item['t'] for item in terms.get("h1", []))
-            h2_terms = await parser.analyze_terms("H2 / H3 terms", query)
+            # h2_terms = await parser.analyze_terms("H2 / H3 terms", query)
+            basic = '\n'.join(item['t']
+                              for item in terms.get("content_basic", []))
+            basic += '\n'.join(item['t']
+                               for item in terms.get("content_extended", []))
+
             # # Генерируем контент с помощью Claude
             # title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
             # desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
@@ -221,10 +258,11 @@ class NeuronwriterLogic:
             # await self.html_processor.insert_h1("data/combined.html", h1)
 
             # Обрабатываем H2 диалог
-            await self.h2_dialogue(h2_terms, sample_text)
+            # await self.h2_dialogue(h2_terms, sample_text)
 
+            await self.basic_and_extended_dialogue(basic, sample_text)
             # Импортируем финальные title и description
-            sample_text = await self.html_processor.read_file("data/combined.html")
+            # sample_text = await self.html_processor.read_file("data/combined.html")
             # await writer.import_title_and_desc(sample_text, title, desc, query)
 
         except Exception as e:

@@ -17,6 +17,8 @@ def setup_logger(name):
         log_file = "logs/prompts.log"
     elif name in ['Neuronwriter-Answer']:
         log_file = "logs/answers.log"
+    # elif name in ['Claude']:
+    #     log_file = "logs/gpt.log"
     else:
         # Все остальные логи → в common.log
         log_file = "logs/app.log"

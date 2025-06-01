@@ -20,6 +20,30 @@ class ParserNeuronwriter:
         self.viewport = {"width": 1280, "height": 800}
         self.url = "https://app.neuronwriter.com/analysis/view/"
 
+    async def analyze_terms_article(self, term: str, query: str) -> list:
+        """
+        Анализирует H1 terms на странице NeuronWriter
+
+        :param term: Термин для поиска (например "H1 terms")
+        :return: Список найденных текстов кнопок
+        """
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent=self.user_agent,
+                viewport=self.viewport
+            )
+            await context.add_cookies(self.cookies)
+
+            page = await context.new_page()
+            await page.goto(self.url + query, wait_until="domcontentloaded")
+            await page.wait_for_timeout(15000)
+
+            results = await self._extract_h1_terms_data(page, term)
+            results = await self._extract_text(results)
+            await browser.close()
+            return results
+
     async def analyze_terms(self, term: str, query: str) -> list:
         """
         Анализирует H1 terms на странице NeuronWriter
@@ -42,6 +66,12 @@ class ParserNeuronwriter:
 
             await browser.close()
             return results
+
+    async def _extract_text(self, text):
+        # Регулярное выражение для извлечения названий перед "число / число" или "число / число-число"
+        pattern = r'^(.+?)\s+\d+\s*/\s*\d+(?:-\d+)?$'
+        matches = re.findall(pattern, text, re.MULTILINE)
+        return "\n".join(matches)
 
     async def _navigate_to_analysis_page(self, page, query):
         """Выполняет навигацию по странице анализа"""

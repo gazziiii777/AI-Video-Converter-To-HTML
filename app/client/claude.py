@@ -32,6 +32,7 @@ class ClaudeClient:
 
         for attempt in range(1, max_retries + 1):
             try:
+                logger.info("Запрос в claude отправляен")
                 response = await anthropic_client.messages.create(
                     model=model,
                     max_tokens=max_tokens,
@@ -40,7 +41,7 @@ class ClaudeClient:
 
                 answer = response.content[0].text
                 # print(answer)
-
+                logger.info(f"Ответ от claude получен и обрабоатн")
                 if file_name is not None:
                     with open(file_name, "w", encoding="utf-8") as f:
                         f.write(answer)
@@ -55,7 +56,7 @@ class ClaudeClient:
                     logger.error(
                         f"Attempt {attempt}/{max_retries} failed. Error: {str(e)}. Retrying in {wait_time} seconds...")
 
-                    logger.debug(claude_messages)
+                    logger.error(f"Ошибка, вот ответ от claude: {response}")
                     time.sleep(wait_time)
                 continue
 
@@ -72,9 +73,10 @@ class ClaudeClient:
         """Запрашивает ответ у Claude с веб-поиском"""
         max_retries = 10
         claude_messages = self._convert_to_claude_format(messages)
-
         for attempt in range(1, max_retries + 1):
             try:
+                logger.info("Запрос в claude отправляен")
+
                 response = await anthropic_client.messages.create(
                     model="claude-3-7-sonnet-latest",
                     messages=claude_messages,
@@ -100,6 +102,8 @@ class ClaudeClient:
                     if block.type == 'text'
                 ]
                 answer = '\n'.join(answer_blocks)
+                logger.info(f"Ответ от claude получен и обрабоатн")
+
                 # answer = response.content[0].text
                 # Расчет стоимости
                 input_cost = response.usage.input_tokens * 3 / 1_000_000
@@ -111,7 +115,9 @@ class ClaudeClient:
                 # Обработка ошибок и повторные попытки
                 if attempt < max_retries:
                     print(f"Attempt {attempt} failed: {str(e)}")
-                    await asyncio.sleep(70 ** attempt)
+                    # logger.error(f"Ошибка, вот ответ от claude: {response}")
+
+                    await asyncio.sleep(100)
                 else:
                     raise
 
@@ -130,6 +136,17 @@ class ClaudeClient:
         )
         return response.content[4].text
 
+    # def _convert_to_claude_format(self, messages):
+    #     """Конвертирует сообщения из формата OpenAI в формат Claude"""
+    #     claude_messages = []
+
+    #     for msg in messages:
+    #         # Claude не использует system-роли, преобразуем их в user
+    #         role = "user" if msg["role"] == "system" else msg["role"]
+    #         claude_messages.append({"role": role, "content": msg["content"]})
+
+    #     return claude_messages
+
     def _convert_to_claude_format(self, messages):
         """Конвертирует сообщения из формата OpenAI в формат Claude"""
         claude_messages = []
@@ -137,6 +154,29 @@ class ClaudeClient:
         for msg in messages:
             # Claude не использует system-роли, преобразуем их в user
             role = "user" if msg["role"] == "system" else msg["role"]
-            claude_messages.append({"role": role, "content": msg["content"]})
+
+            # Обрабатываем content
+            if isinstance(msg["content"], str):
+                # Если content - строка, преобразуем в текстовый блок
+                content = [{"type": "text", "text": msg["content"]}]
+            elif isinstance(msg["content"], list):
+                # Если content - список (например, multimodal)
+                content = []
+                for block in msg["content"]:
+                    if isinstance(block, str):
+                        content.append({"type": "text", "text": block})
+                    elif isinstance(block, dict):
+                        # Проверяем наличие обязательного поля type
+                        if "type" not in block:
+                            # Добавляем type по умолчанию
+                            block["type"] = "text"
+                        content.append(block)
+            else:
+                continue  # Пропускаем сообщения с некорректным content
+
+            claude_messages.append({
+                "role": role,
+                "content": content
+            })
 
         return claude_messages

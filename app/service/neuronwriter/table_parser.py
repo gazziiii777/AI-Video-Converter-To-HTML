@@ -1,6 +1,7 @@
 import config.config as config
+from config.logging_config import setup_logger
 
-
+logger = setup_logger("table")
 class TableParser:
     @staticmethod
     async def parse_keywords_table(table_string: str, number: int = "") -> tuple:
@@ -22,7 +23,9 @@ class TableParser:
                     h2_phrases.append(
                         f"{parts[0].strip()} h2: {parts[2].strip()}")
 
+        
         if number == 12 and len(included) > 0:
+            logger.info(included)
             config.BASIC_INCLUDED = ", ".join(included)
 
         if len(included) > 0:
@@ -54,7 +57,7 @@ class TableParser:
         return result, None
 
     @staticmethod
-    async def parse_h2_replacement_table(table_string: str) -> tuple:
+    async def parse_replacement_table(table_string: str) -> tuple:
         """Парсит таблицу для замены H2 заголовков"""
         lines = [line.strip() for line in table_string.split('\n')
                  if line.strip() and not line.strip().replace('-', '').replace('|', '').replace(' ', '').strip() == '']
@@ -64,8 +67,8 @@ class TableParser:
             columns = [col.strip() for col in line.split('|') if col.strip()]
             row_dict = {
                 'keyword': columns[0].strip() if len(columns) > 0 else '',
-                'old_h2': columns[1].strip() if len(columns) > 1 else '',
-                'new_h2': columns[2].strip() if len(columns) > 2 else '',
+                'old': columns[1].strip() if len(columns) > 1 else '',
+                'new': columns[2].strip() if len(columns) > 2 else '',
             }
             result.append(row_dict)
 

@@ -10,3 +10,4 @@ inputs/*
 data/
 links.txt
 app/service/neuronwriter/logic_1.py
+core/combined.html

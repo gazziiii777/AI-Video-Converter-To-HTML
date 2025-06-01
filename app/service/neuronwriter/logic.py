@@ -1,23 +1,23 @@
-import os
-import json
+# import os
+# import json
 import re
 from typing import List, Dict, Any, Optional
-import aiofiles
+# import aiofiles
 from app.client.neuronwriter import Neuronwriter
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 from icecream import ic
 import config.config as config
 from config.logging_config import setup_logger
 from app.service.neuronwriter.parser import ParserNeuronwriter
-from app.service.export.markdown_to_html import MarkdownToHTMLConverter
-from config.config import PATH_TO_RESULTS_HTML, OUTPUT_HTML_NAME
+# from app.service.export.markdown_to_html import MarkdownToHTMLConverter
+# from config.config import PATH_TO_RESULTS_HTML, OUTPUT_HTML_NAME
 from app.service.neuronwriter.prompt_manager import PromptManager
 from app.service.neuronwriter.html_processor import HTMLProcessor
 from app.service.neuronwriter.table_parser import TableParser
 from app.service.neuronwriter.html_modifier import HTMLModifier
 
 
-logger = setup_logger('logic')
+logger = setup_logger('Neuronwriter')
 prompt_logger = setup_logger('Neuronwriter-Prompt')
 answer_logger = setup_logger('Neuronwriter-Answer')
 
@@ -74,9 +74,11 @@ class NeuronwriterLogic:
 
         # Обработка шага 8 (если есть данные из шага 7)
         if last_answer:
+            html = await self.html_processor.read_file("data/combined.html")
             await self._process_step_8(html, last_answer)
 
         if config.H2_INCLUDED:
+            html = await self.html_processor.read_file("data/combined.html")
             await self._process_main_steps(value, html, messages, [9])
 
         return last_answer
@@ -85,7 +87,7 @@ class NeuronwriterLogic:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
         messages = []
         last_answer = None
-
+        html = await self.html_processor.read_file("data/combined.html")
         # Обработка основных шагов диалога (4-7)
         last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14])
 
@@ -116,22 +118,28 @@ class NeuronwriterLogic:
             elif step_id == 14:
                 formatted_prompt = self._format_prompt(
                     prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
+                logger.info(formatted_prompt)
             else:
                 formatted_prompt = self._format_prompt(
                     prompt_info, value, html, messages)
 
             messages.append({"role": "user", "content": formatted_prompt})
 
+            logger.info(f"Отправляем запрос в Claude для step_id: {step_id}")
+
             answer = await self._get_claude_response(step_id, prompt_info, messages)
+
             self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
+            logger.info(f"Получен ответ от Claude для step_id: {step_id}")
 
             answer, _ = await self._process_special_steps(step_id, answer)
-
-            if step_id == 9 and answer:
-                await self.html_modifier.replace_h2_in_file(html, answer)
+            if step_id in [9, 13, 14] and answer:
+                await self.html_modifier.replace_in_file(html, answer)
 
             if answer is None and step_id == 6:
                 return None
+
+            logger.info(f"Обработан ответ для step_id: {step_id}")
 
             messages.append({"role": "assistant", "content": answer})
 
@@ -148,19 +156,22 @@ class NeuronwriterLogic:
         for index, product in enumerate(last_answer):
             formatted_prompt = self._format_prompt(
                 prompt_info, "", html, [], h3=product.get('Prompt', ''))
+            logger.info(f"Отправляем запрос в Claude для step_id: 8")
 
             messages = [{"role": "user", "content": formatted_prompt}]
-            answer = await self.client.ask_claude_web(max_tokens=2000, messages=messages)
+            answer = await self.client.ask_claude_web(max_tokens=7000, messages=messages)
 
-            answer = self.html_processor.extract_answer(answer)
+            # answer = self.html_processor.extract_answer(answer)
 
-            messages.append({"role": "assistant", "content": answer})
-            answer = await self.client.ask_claude(max_tokens=4000, messages=messages)
+            # messages.append({"role": "assistant", "content": answer})
+            # answer = await self.client.ask_claude(max_tokens=7000, messages=messages)
 
             answer = self.html_processor.extract_answer(
                 answer).replace('#', '')
             config.H3_DATA[index]['P'] = answer
             self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
+
+            logger.info(f"Обработан ответ для step_id: 8")
 
         await self.html_modifier.process_html_with_h3(html)
 
@@ -189,7 +200,7 @@ class NeuronwriterLogic:
 
     async def _get_claude_response(self, step_id: int, prompt_info: dict, messages: list) -> str:
         """Получает ответ от Claude API в зависимости от шага"""
-        if step_id in [4, 5, 10, 11, 12]:
+        if step_id in [4, 5, 10, 11, 12, 14]:
             answer = await self.client.ask_claude(
                 max_tokens=prompt_info["max_tokens"],
                 messages=messages,
@@ -215,8 +226,8 @@ class NeuronwriterLogic:
             return await self.table_parser.parse_keywords_table(answer, step_id)
         elif step_id == 7:
             return await self.table_parser.parse_h3_table(answer)
-        elif step_id == 9:
-            return await self.table_parser.parse_h2_replacement_table(answer)
+        elif step_id in [9, 13, 14]:
+            return await self.table_parser.parse_replacement_table(answer)
         return answer, None
 
     @staticmethod
@@ -239,31 +250,34 @@ class NeuronwriterLogic:
             terms = content.get("terms", {})
 
             # Получаем термины для разных частей контента
-            # titles_terms = '\n'.join(item['t']
-            #                          for item in terms.get("title", []))
-            # desc_terms = '\n'.join(item['t'] for item in terms.get("desc", []))
-            # h1_terms = '\n'.join(item['t'] for item in terms.get("h1", []))
-            # h2_terms = await parser.analyze_terms("H2 / H3 terms", query)
-            basic = '\n'.join(item['t']
-                              for item in terms.get("content_basic", []))
-            basic += '\n'.join(item['t']
-                               for item in terms.get("content_extended", []))
+            titles_terms = '\n'.join(item['t']
+                                     for item in terms.get("title", []))
+            desc_terms = '\n'.join(item['t'] for item in terms.get("desc", []))
+            h1_terms = '\n'.join(item['t'] for item in terms.get("h1", []))
+            h2_terms = await parser.analyze_terms("H2 / H3 terms", query)
+            # basic = '\n'.join(item['t']
+            #                   for item in terms.get("content_basic", []))
+            # basic += '\n'.join(item['t']
+            #                    for item in terms.get("content_extended", []))
+            basic = await parser.analyze_terms_article("basic:", query)
 
             # # Генерируем контент с помощью Claude
-            # title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
-            # desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
-            # h1 = await self.format_and_ask("h1", h1_terms, sample_text, "Prusa Core One")
+            title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
+            desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
+            h1 = await self.format_and_ask("h1", h1_terms, sample_text, "Prusa Core One")
 
             # # Обновляем HTML с новым H1
-            # await self.html_processor.insert_h1("data/combined.html", h1)
+            await self.html_processor.insert_h1("data/combined.html", h1)
 
             # Обрабатываем H2 диалог
-            # await self.h2_dialogue(h2_terms, sample_text)
+            await self.h2_dialogue(h2_terms, sample_text)
+
+            sample_text = await self.html_processor.read_file("data/combined.html")
 
             await self.basic_and_extended_dialogue(basic, sample_text)
             # Импортируем финальные title и description
-            # sample_text = await self.html_processor.read_file("data/combined.html")
-            # await writer.import_title_and_desc(sample_text, title, desc, query)
+            sample_text = await self.html_processor.read_file("data/combined.html")
+            await writer.import_title_and_desc(sample_text, title, desc, query)
 
         except Exception as e:
             logger.error(f"Error in neurowriter_logic: {e}")

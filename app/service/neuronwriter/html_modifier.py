@@ -4,19 +4,23 @@ from bs4 import BeautifulSoup
 from app.service.neuronwriter.html_processor import HTMLProcessor
 from app.service.export.markdown_to_html import MarkdownToHTMLConverter
 from typing import List, Dict
+from config.logging_config import setup_logger
+
+logger = setup_logger("HTML_modifier")
+
 
 class HTMLModifier:
     @staticmethod
-    async def replace_h2_in_file(html: str, h2_replacements: List[Dict]) -> None:
+    async def replace_in_file(html: str, replacements: List[Dict]) -> None:
         """Заменяет H2 заголовки в HTML"""
-        for item in h2_replacements:
-            if item.get("old_h2") in html:
-                html = html.replace(item.get("old_h2"), item.get("new_h2"))
-                # logger.info(f"Заменен H2: '{item.get('old_h2')}' -> '{item.get('new_h2')}'")
+        for item in replacements:
+            if item.get("old") in html:
+                html = html.replace(item.get("old"), item.get("new"))
+                logger.info(
+                    f"Заменен '{item.get('old')}' -> '{item.get('new')}'")
             else:
-                # logger.warning(f"H2 '{item.get('old_h2')}' не найден в файле")
-                pass
-            
+                logger.error(f"'{item.get('old')}' не найден в файле")
+
         HTMLProcessor.save_html(BeautifulSoup(html, 'html.parser'))
 
     @staticmethod

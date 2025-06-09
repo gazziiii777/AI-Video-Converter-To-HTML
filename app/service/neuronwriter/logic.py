@@ -116,9 +116,9 @@ class NeuronwriterLogic:
                 formatted_prompt = self._format_prompt(
                     prompt_info=prompt_info, text=value, html=html, messages=messages)
             elif step_id == 14:
+                messages = []
                 formatted_prompt = self._format_prompt(
                     prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
-                logger.info(formatted_prompt)
             else:
                 formatted_prompt = self._format_prompt(
                     prompt_info, value, html, messages)
@@ -130,11 +130,18 @@ class NeuronwriterLogic:
             answer = await self._get_claude_response(step_id, prompt_info, messages)
 
             self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
+
+            
             logger.info(f"Получен ответ от Claude для step_id: {step_id}")
 
+
+            if step_id == 4 and answer is None:
+                return None
+            
+            
             answer, _ = await self._process_special_steps(step_id, answer)
             if step_id in [9, 13, 14] and answer:
-                await self.html_modifier.replace_in_file(html, answer)
+                html = await self.html_modifier.replace_in_file(html, answer)
 
             if answer is None and step_id == 6:
                 return None
@@ -263,6 +270,9 @@ class NeuronwriterLogic:
 
             # # Генерируем контент с помощью Claude
             title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
+            # print(222222222)
+            # print(title)
+            # return
             desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
             h1 = await self.format_and_ask("h1", h1_terms, sample_text, "Prusa Core One")
 

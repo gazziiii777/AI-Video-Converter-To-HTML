@@ -38,6 +38,7 @@ class ParserNeuronwriter:
             page = await context.new_page()
             await page.goto(self.url + query, wait_until="domcontentloaded")
             await page.wait_for_timeout(15000)
+            await asyncio.sleep(70)
 
             results = await self._extract_h1_terms_data(page, term)
             results = await self._extract_text(results)

@@ -55,8 +55,8 @@ class ClaudeClient:
                     wait_time = 70
                     logger.error(
                         f"Attempt {attempt}/{max_retries} failed. Error: {str(e)}. Retrying in {wait_time} seconds...")
-
-                    logger.error(f"Ошибка, вот ответ от claude: {response}")
+                    logger.error(f"{messages}")
+                    # logger.error(f"Ошибка, вот ответ от claude: {response}")
                     time.sleep(wait_time)
                 continue
 

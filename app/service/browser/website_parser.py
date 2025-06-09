@@ -63,20 +63,50 @@ class WebsiteParser:
             valid_images = [img for img in images if img['src']
                             and img['src'].startswith(('http:', 'https:'))]
             downloaded_images = []
-            counter = 1  # Счетчик для нумерации изображений
 
             async with aiohttp.ClientSession() as session:
                 for img in valid_images:
                     try:
                         img_url = img['currentSrc'] if img['currentSrc'] else img['src']
                         parsed_url = urlparse(img_url)
-                        ext = os.path.splitext(parsed_url.path)[1]
+
+                        # Получаем имя файла из URL
+                        original_filename = os.path.basename(parsed_url.path)
+                        if not original_filename:
+                            original_filename = "image"  # Дефолтное имя, если не удалось извлечь
+
+                        # Удаляем параметры запроса, если они есть
+                        original_filename = original_filename.split('?')[0]
+                        original_filename = original_filename.split('#')[0]
+
+                        # Получаем расширение файла
+                        ext = os.path.splitext(original_filename)[1]
                         if not ext or len(ext) > 5:
                             ext = '.jpg'
 
-                        # Формируем имя файла с числовым префиксом
-                        filename = f"{counter}{ext}"
-                        filepath = os.path.join(self.folder_path_img, filename)
+                        # Если имя файла без расширения, добавляем его
+                        if not os.path.splitext(original_filename)[1]:
+                            original_filename = f"{os.path.splitext(original_filename)[0]}{ext}"
+
+                        # Заменяем недопустимые символы в имени файла
+                        original_filename = re.sub(
+                            r'[\\/*?:"<>|]', "_", original_filename)
+
+                        # Если имя слишком длинное, укорачиваем его
+                        if len(original_filename) > 100:
+                            name, ext = os.path.splitext(original_filename)
+                            original_filename = f"{name[:95]}{ext}"
+
+                        # Проверяем, не существует ли уже файл с таким именем
+                        counter = 1
+                        base_name, ext = os.path.splitext(original_filename)
+                        filepath = os.path.join(
+                            self.folder_path_img, original_filename)
+                        while os.path.exists(filepath):
+                            original_filename = f"{base_name}_{counter}{ext}"
+                            filepath = os.path.join(
+                                self.folder_path_img, original_filename)
+                            counter += 1
 
                         async with session.get(img_url) as response:
                             if response.status == 200:
@@ -92,7 +122,6 @@ class WebsiteParser:
                                     'download_status': 'success'
                                 }
                                 downloaded_images.append(img_info)
-                                counter += 1  # Увеличиваем счетчик только при успешном скачивании
                             else:
                                 img['download_status'] = f'failed (HTTP {response.status})'
                                 downloaded_images.append(img)
@@ -170,8 +199,8 @@ class WebsiteParser:
 
     async def filter_images_by_size(
         self,
-        min_width: int = 300,
-        min_height: int = 300,
+        min_width: int,
+        min_height: int,
         verbose: bool = True
     ) -> dict:
         """

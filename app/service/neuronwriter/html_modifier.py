@@ -10,18 +10,24 @@ logger = setup_logger("HTML_modifier")
 
 
 class HTMLModifier:
+
     @staticmethod
-    async def replace_in_file(html: str, replacements: List[Dict]) -> None:
+    async def replace_in_file(html: str, replacements: List[Dict]) -> str:
         """Заменяет H2 заголовки в HTML"""
         for item in replacements:
-            if item.get("old") in html:
-                html = html.replace(item.get("old"), item.get("new"))
+            normalized_html = ' '.join(html.split())
+            normalized_old = ' '.join(item.get("old", "").split())
+
+            if normalized_old in normalized_html:
+                normalized_html = normalized_html.replace(
+                    item.get("old"), item.get("new"))
                 logger.info(
                     f"Заменен '{item.get('old')}' -> '{item.get('new')}'")
             else:
                 logger.error(f"'{item.get('old')}' не найден в файле")
 
-        HTMLProcessor.save_html(BeautifulSoup(html, 'html.parser'))
+        HTMLProcessor.save_html(BeautifulSoup(normalized_html, 'html.parser'))
+        return normalized_html
 
     @staticmethod
     async def process_html_with_h3(html: str) -> None:

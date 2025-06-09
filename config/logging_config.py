@@ -2,6 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 
+
 def setup_logger(name):
     # Создаем папку для логов, если её нет
     if not os.path.exists('logs'):
@@ -10,13 +11,16 @@ def setup_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Если имя логгера == "special" → пишем в special.log
     if name in ['Neuronwriter-Prompt']:
         log_file = "logs/prompts.log"
     elif name in ['Neuronwriter-Answer']:
         log_file = "logs/answers.log"
+    elif name in ['DataForSeo']:
+        log_file = "logs/dataforseo.log"
     # elif name in ['Claude']:
     #     log_file = "logs/gpt.log"
     else:

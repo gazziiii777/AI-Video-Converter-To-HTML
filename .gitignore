@@ -11,3 +11,5 @@ data/
 links.txt
 app/service/neuronwriter/logic_1.py
 core/combined.html
+solo_prompts.json
+test.py

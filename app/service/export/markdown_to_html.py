@@ -4,13 +4,14 @@ import json
 from app.client.claude import ClaudeClient
 from config.config import IMG_HTML_CODE, PATH_TO_RESULTS_HTML, PATH_TO_ANALYSIS_RESULTS, OUTPUT_HTML_NAME, FILES_FOR_HTML
 from app.service.media.text_on_image import TextOnImage
+from app.service.browser.youtube_downloader import YouTubeDownloader
 
 
 class MarkdownToHTMLConverter:
     def __init__(self):
         self.youtube_iframe = """
         <iframe allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                src="https://www.youtube-nocookie.com/embed/O04RM-KCP68?si=pu2-LwdzHJ8v5NlS"
+                src="https://www.youtube-nocookie.com/embed/{video_id}?si=pu2-LwdzHJ8v5NlS"
                 title="YouTube video player"
                 loading="lazy"
                 frameborder="0"
@@ -20,6 +21,45 @@ class MarkdownToHTMLConverter:
         </iframe>
         """
         self.path_to_results = PATH_TO_RESULTS_HTML
+
+    def format_links(self, links_array):
+        result = []
+        for link_info in links_array:
+            parts = []
+            if len(link_info) >= 1:
+                parts.append(str(link_info[0]))  # url
+            if len(link_info) >= 2:
+                parts.append(str(link_info[1]))  # title
+            result.append(", ".join(parts))
+        return "\n".join(result)
+
+    def extract_answer(self, text: str) -> str:
+        """
+        Извлекает текст внутри тегов <answer> и </answer> из переданного текста.
+
+        Args:
+            text: Исходный текст, содержащий ответ в тегах <answer>
+
+        Returns:
+            Текст внутри тегов answer или пустая строка, если теги не найдены
+        """
+        match = re.search(r'<answer>(.*?)</answer>', text, re.DOTALL)
+        return match.group(1).strip() if match else ""
+
+    def extract_youtube_id(self, url):
+        """
+        Извлекает идентификатор видео из URL YouTube.
+        Работает с обычными URL (watch?v=...) и сокращенными URL (youtu.be/...).
+        """
+        # Проверяем стандартный URL с watch?v=
+        if "watch?v=" in url:
+            return url.split("watch?v=")[1].split("&")[0]
+        # Проверяем сокращенный URL youtu.be/
+        elif "youtu.be/" in url:
+            return url.split("youtu.be/")[1].split("?")[0]
+        # Если URL не распознан, возвращаем None
+        else:
+            return None
 
     def convert_md_to_html(self, text):
         """Конвертирует Markdown-подобное форматирование в HTML"""
@@ -255,9 +295,30 @@ class MarkdownToHTMLConverter:
                     lines = lines[1:]  # Удаляем первую строку
                 # Собираем обратно с двумя переносами
                 content = '\n'.join(lines) + "\n\n"
+                video_from_channel = await YouTubeDownloader().parse_channel_videos()
+                video_from_search = await YouTubeDownloader().search("Prusa CORE One Review", True)
+
+                formatted_video_from_channel = self.format_links(
+                    video_from_channel)
+                formatted_video_from_search = self.format_links(
+                    video_from_search)
+
+                messages = [
+                    {"role": "user",
+                     "content": f"PROMPT:  You are tasked with selecting a YouTube review video for a product page. Your objective is to choose the most appropriate video based on specific criteria. The product name is: <product_name> 'Prusa CORE One' </product_name> Here are the videos from Top 3D Shop's YouTube Channel: <top3dshop_youtube_videos> YouTube Link Vidio Title {formatted_video_from_channel} </top3dshop_youtube_videos> Here are the videos from YouTube search for Prusa CORE One <search_results> YouTube Link Vidio Title Author of the video {formatted_video_from_search} </search_results> Analyze the search results and select one YouTube review video based on the following criteria, in order of priority: 1. If a video by Top 3D Shop exists, select that video (in English). 2. If a video by the manufacturer exists, select that video. 3. If no Top 3D Shop or manufacturer video is available, select the most comprehensive and highly-rated review. Important requirements: - Select only one YouTube review video specifically relevant to the product name. - Exclude videos about previous generations or significantly different versions. - Output only the final selected video URL as a clickable link, with no additional text or explanation. - The output must be a clean YouTube link in the format: https://www.youtube.com/watch?v=XXXXXXXXXXX - Remove any extra URL parameters (such as &pp, &t=, etc.)—the link must contain only the base ?v= parameter. - Do not include any tags, timestamps, or formatting other than the clickable link. - Do not include any explanations, self-references, or additional output. Your final output should be in the following format: <answer> [The selected YouTube video URL] </answer> "}
+                ]
+                answer = await client.ask_claude_web(
+                    max_tokens=4000,
+                    messages=messages,
+                )
+                answer_clear = self.extract_answer(answer)
+                clear_video_id = self.extract_youtube_id(answer_clear)
+
+                iframe_template = self.youtube_iframe.format(
+                    video_id=clear_video_id)
 
                 html_content += self.convert_md_to_html(
-                    content) + self.youtube_iframe + "\n<hr>\n"
+                    content) + iframe_template + "\n<hr>\n"
                 continue
             else:
                 # max_attempts = 5
@@ -418,8 +479,8 @@ class MarkdownToHTMLConverter:
                     files_to_combine, html_output_path, img_description=img_description)
 
                 # Дополнительно создаем TXT файл
-                await self._combine_files_to_txt(
-                    files_to_combine, txt_output_path, img_description=img_description)
+                # await self._combine_files_to_txt(
+                #     files_to_combine, txt_output_path, img_description=img_description)
 
                 print(
                     f"Файлы успешно обработаны (попытка {attempt}/{max_attempts})")

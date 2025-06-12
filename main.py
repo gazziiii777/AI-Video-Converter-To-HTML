@@ -16,7 +16,7 @@ from app.service.neuronwriter.logic import NeuronwriterLogic
 import config.config
 from config.config import PATH_TO_IMG, PATH_TO_ANALYSIS_RESULTS
 from app.service.browser.youtube_downloader import YouTubeDownloader
-from app.service.dataforseo.logic_2 import AsyncGoogleImagesScraper
+from app.service.dataforseo.logic import AsyncGoogleImagesScraper
 
 
 async def retry_async_function(
@@ -97,25 +97,25 @@ async def main():
     #     verbose=True
     # )
 
-    a = AsyncGoogleImagesScraper()
-    b = await a.get_product_images("prusa core one")
+    # a = AsyncGoogleImagesScraper()
+    # b = await a.get_product_images("prusa core one")
 
-    async with WebsiteParser(headless=True) as downloader:
-        # Скачиваем текст с каждого сайта
-        for url in b:
-            url = url.strip()  # Убираем лишние пробелы и символы новой строки
-            # print(f"Скачиваем контент с сайта: {url}")
-            # await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
+    # async with WebsiteParser(headless=True) as downloader:
+    #     # Скачиваем текст с каждого сайта
+    #     for url in b:
+    #         url = url.strip()  # Убираем лишние пробелы и символы новой строки
+    #         # print(f"Скачиваем контент с сайта: {url}")
+    #         # await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
 
-            # Скачиваем и фильтруем изображения только с первого сайта
-            await downloader.download_images(url)
+    #         # Скачиваем и фильтруем изображения только с первого сайта
+    #         await downloader.download_images(url)
 
-    async with WebsiteParser(headless=True) as downloader:
-        await downloader.filter_images_by_size(
-            min_width=600,
-            min_height=400,
-            verbose=True
-        )
+    # async with WebsiteParser(headless=True) as downloader:
+    #     await downloader.filter_images_by_size(
+    #         min_width=600,
+    #         min_height=400,
+    #         verbose=True
+    #     )
 
     # llm_client = GPTClient()
     # processor = ImageProcessor(llm_client)
@@ -142,8 +142,8 @@ async def main():
     # print(config.TOTAL_PRICE)
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
-    # neuronwriter = NeuronwriterLogic(client)
-    # await neuronwriter.neuronwriter_logic()
+    neuronwriter = NeuronwriterLogic(client)
+    await neuronwriter.neuronwriter_logic()
 
     # b = await YouTubeDownloader().parse_channel_videos()
     # c = await YouTubeDownloader().search("Prusa CORE One Review", True)

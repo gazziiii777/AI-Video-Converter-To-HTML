@@ -108,9 +108,9 @@ class Neuronwriter:
                 return response_json["query"]
 
     async def import_content(self, text):
-        # query = await self._create_query()
+        query = await self._create_query()
         # query = "a867d7cf1877391c"
-        query = "f694bb391e88d30c"
+        # query = "f694bb391e88d30c"
         payload = json.dumps({
             "query": query,
             "html": text,
@@ -118,7 +118,7 @@ class Neuronwriter:
         async with aiohttp.ClientSession() as session:
             for attempt in range(5):
                 try:
-                    # await asyncio.sleep(40)
+                    await asyncio.sleep(40)
                     async with session.post(
                         self.base_url + "/import-content",
                         headers=self.headers,

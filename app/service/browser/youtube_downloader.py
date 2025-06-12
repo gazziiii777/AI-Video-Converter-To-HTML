@@ -56,7 +56,7 @@ class YouTubeDownloader:
         """
         Выполняет поиск по запросу и возвращает список ссылок на видео,
         исключая YouTube Shorts. Если include_titles=True, возвращает список
-        из пар [ссылка, название].
+        из пар [ссылка, название, автор].
         """
         search_opts = {
             'quiet': True,
@@ -80,13 +80,14 @@ class YouTubeDownloader:
                 video_url = f"https://www.youtube.com/watch?v={entry['id']}"
                 if include_titles:
                     title = entry.get('title', '')
-                    results.append([video_url, title])
+                    # Получаем автора (название канала)
+                    channel = entry.get('uploader', '')
+                    results.append([video_url, title, channel])
                 else:
                     results.append(video_url)
-            if len(results) >= self.max_results:
-                break
+                if len(results) >= self.max_results:
+                    break
 
-        # print(f"ЮТУБ ССЫЛКИ!! {results}")
         return results
 
     async def search_and_download(self, query: str) -> None:

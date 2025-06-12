@@ -77,8 +77,8 @@ class ParserNeuronwriter:
     async def _navigate_to_analysis_page(self, page, query):
         """Выполняет навигацию по странице анализа"""
         await page.goto(self.url + query, wait_until="domcontentloaded")
-        # await page.click('button.first-action-button')
-        # await page.click("#editor-sidebar-toggle")
+        await page.click('button.first-action-button')
+        await page.click("#editor-sidebar-toggle")
         await page.click("#terms-in-headers-tab")
         await page.wait_for_timeout(10000)
 

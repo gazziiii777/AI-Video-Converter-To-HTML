@@ -10,6 +10,7 @@ from app.service.site_services.prompt_manager import PromptManager
 from urllib.parse import unquote
 from app.service.site_services.html_processor import HTMLProcessor
 
+logger = setup_logger('dataforseo')
 dataforseo_logger = setup_logger('DataForSeo')
 
 
@@ -26,13 +27,20 @@ class AsyncGoogleImagesScraper:
     def _format_prompt(self, prompt_info: dict = None,
                        url_list: str = None) -> str:
         """Форматирует промпт с подстановкой переменных"""
-        format_args = {
-            "url_list": url_list,
-            "PRODUCT_NAME": "Prusa Core One",
-        }
-        return prompt_info["text"].format(
-            **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
-        )
+        try:
+            format_args = {
+                "url_list": url_list,
+                "PRODUCT_NAME": "Prusa Core One",
+            }
+            return prompt_info["text"].format(
+                **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
+            )
+        except Exception as e:
+            dataforseo_logger.error(f"Ошибка в фунции _format_prompt: {e}")
+            dataforseo_logger.debug(
+                f"Аргументы переданный в фунцию _format_prompt, первый аргумент prompt_info: {prompt_info}\n Второй аргумент url_list: {url_list}")
+            raise
+
 
     async def _make_request(self, method: str, endpoint: str, data: dict = None) -> dict:
         """Улучшенный запрос с таймаутами и логированием"""
@@ -201,9 +209,9 @@ class AsyncGoogleImagesScraper:
                     for chunk in response.iter_content(1024):
                         file.write(chunk)
 
-                print(f"✅ Успешно: {filename}")
+                dataforseo_logger.info(f"✅ Успешно: {filename}")
             except Exception as e:
-                print(f"❌ Ошибка ({url}): {e}")
+                dataforseo_logger.error(f"❌ Ошибка ({url}): {e}")
 
     async def scrape_keywords(self, keywords: List[str]) -> List[List[str]]:
         """Основная функция с параллельной обработкой ключевых слов"""
@@ -223,11 +231,12 @@ class AsyncGoogleImagesScraper:
 
     @staticmethod
     async def get_product_images(product_name: str) -> List[List[str]]:
-        client = ClaudeClient()
+        logger.info("Начало работы фукции get_product_images")
+        # client = ClaudeClient()
         scraper = AsyncGoogleImagesScraper()
-        prompt_manager = PromptManager("solo_prompts.json")
-        html_processor = HTMLProcessor()
-        prompt_info = await prompt_manager.get_prompt_by_id(0)
+        # prompt_manager = PromptManager("solo_prompts.json")
+        # html_processor = HTMLProcessor()
+        # prompt_info = await prompt_manager.get_prompt_by_id(0)
         """Статический метод для получения изображений по продукту"""
         keywords = [
             f"{product_name}",
@@ -252,3 +261,4 @@ class AsyncGoogleImagesScraper:
         # )
         # answer = html_processor.extract_answer(answer).lstrip().split()
         await scraper.save_images_from_urls(result)
+        logger.info("Функция get_product_images завершина без ошибок")

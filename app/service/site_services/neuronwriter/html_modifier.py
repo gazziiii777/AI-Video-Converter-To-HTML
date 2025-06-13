@@ -1,7 +1,7 @@
 import config.config as config
 
 from bs4 import BeautifulSoup
-from app.service.neuronwriter.html_processor import HTMLProcessor
+from app.service.site_services.html_processor import HTMLProcessor
 from app.service.export.markdown_to_html import MarkdownToHTMLConverter
 from typing import List, Dict
 from config.logging_config import setup_logger

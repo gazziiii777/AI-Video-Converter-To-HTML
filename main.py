@@ -12,11 +12,11 @@ from app.service.browser.youtube_downloader import YouTubeDownloader
 from app.service.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
-from app.service.neuronwriter.logic import NeuronwriterLogic
+from app.service.site_services.neuronwriter.logic import NeuronwriterLogic
 import config.config
 from config.config import PATH_TO_IMG, PATH_TO_ANALYSIS_RESULTS
 from app.service.browser.youtube_downloader import YouTubeDownloader
-from app.service.dataforseo.logic import AsyncGoogleImagesScraper
+from app.service.site_services.dataforseo.logic import AsyncGoogleImagesScraper
 
 
 async def retry_async_function(

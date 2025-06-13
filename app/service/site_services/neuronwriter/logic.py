@@ -8,13 +8,13 @@ from app.client.neuronwriter import Neuronwriter
 from icecream import ic
 import config.config as config
 from config.logging_config import setup_logger
-from app.service.neuronwriter.parser import ParserNeuronwriter
+from app.service.site_services.neuronwriter.parser import ParserNeuronwriter
 # from app.service.export.markdown_to_html import MarkdownToHTMLConverter
 # from config.config import PATH_TO_RESULTS_HTML, OUTPUT_HTML_NAME
-from app.service.neuronwriter.prompt_manager import PromptManager
-from app.service.neuronwriter.html_processor import HTMLProcessor
-from app.service.neuronwriter.table_parser import TableParser
-from app.service.neuronwriter.html_modifier import HTMLModifier
+from app.service.site_services.prompt_manager import PromptManager
+from app.service.site_services.html_processor import HTMLProcessor
+from app.service.site_services.neuronwriter.table_parser import TableParser
+from app.service.site_services.neuronwriter.html_modifier import HTMLModifier
 
 
 logger = setup_logger('Neuronwriter')
@@ -61,126 +61,154 @@ class NeuronwriterLogic:
             self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
             return answer
         except Exception as e:
-            logger.error(f"Error querying Claude for {label}: {e}")
-            return None
+            logger.error(f"Ошибка в фунции format_and_ask: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию format_and_ask, первый аргумент label: {label}\n Второй аргумент value: {value}\n Третий аргумент html: {html}\n Четвертый аргумент product_name {product_name}")
+            raise
 
     async def h2_dialogue(self, value: str, html: str) -> Optional[Any]:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
-        messages = []
-        last_answer = None
+        try:
+            messages = []
+            last_answer = None
 
-        # Обработка основных шагов диалога (4-7)
-        last_answer = await self._process_main_steps(value, html, messages, [4, 5, 6, 7])
+            # Обработка основных шагов диалога (4-7)
+            last_answer = await self._process_main_steps(value, html, messages, [4, 5, 6, 7])
 
-        # Обработка шага 8 (если есть данные из шага 7)
-        if last_answer:
-            html = await self.html_processor.read_file("data/combined.html")
-            await self._process_step_8(html, last_answer)
+            # Обработка шага 8 (если есть данные из шага 7)
+            if last_answer:
+                html = await self.html_processor.read_file("data/combined.html")
+                await self._process_step_8(html, last_answer)
 
-        if config.H2_INCLUDED:
-            html = await self.html_processor.read_file("data/combined.html")
-            await self._process_main_steps(value, html, messages, [9])
+            if config.H2_INCLUDED:
+                html = await self.html_processor.read_file("data/combined.html")
+                await self._process_main_steps(value, html, messages, [9])
 
-        return last_answer
+            return last_answer
+        except Exception as e:
+            logger.error(f"Ошибка в фунции h2_dialogue: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию h2_dialogue, первый аргумент value: {value}\n Второй аргумент html: {html}")
+            raise
 
     async def basic_and_extended_dialogue(self, value: str, html: str) -> Optional[Any]:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
-        messages = []
-        last_answer = None
-        html = await self.html_processor.read_file("data/combined.html")
-        # Обработка основных шагов диалога (4-7)
-        last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14])
+        try:
+            messages = []
+            last_answer = None
+            html = await self.html_processor.read_file("data/combined.html")
+            # Обработка основных шагов диалога (4-7)
+            last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14])
 
-        # # Обработка шага 8 (если есть данные из шага 7)
-        # if last_answer:
-        #     await self._process_step_8(html, last_answer)
+            # # Обработка шага 8 (если есть данные из шага 7)
+            # if last_answer:
+            #     await self._process_step_8(html, last_answer)
 
-        # if config.H2_INCLUDED:
-        #     await self._process_main_steps(value, html, messages, [9])
+            # if config.H2_INCLUDED:
+            #     await self._process_main_steps(value, html, messages, [9])
 
-        # return last_answer
+            # return last_answer
+        except Exception as e:
+            logger.error(f"Ошибка в фунции basic_and_extended_dialogue: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию basic_and_extended_dialogue, первый аргумент value: {value}\n Второй аргумент html: {html}")
+            raise
 
     async def _process_main_steps(self, value: str, html: str, messages: list, steps: list) -> Optional[Any]:
         """Обрабатывает основные шаги диалога"""
-        last_answer = None
-        messages = []
-        for step_id in steps:
-            prompt_info = await self.prompt_manager.get_prompt_by_id(step_id)
-            if not prompt_info:
-                continue
+        try:
+            last_answer = None
+            messages = []
+            for step_id in steps:
+                prompt_info = await self.prompt_manager.get_prompt_by_id(step_id)
+                if not prompt_info:
+                    continue
 
-            if step_id == 9:
-                formatted_prompt = self._format_prompt(
-                    prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED)
-            elif step_id == 10:
-                formatted_prompt = self._format_prompt(
-                    prompt_info=prompt_info, text=value, html=html, messages=messages)
-            elif step_id == 14:
-                messages = []
-                formatted_prompt = self._format_prompt(
-                    prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
-            else:
-                formatted_prompt = self._format_prompt(
-                    prompt_info, value, html, messages)
+                if step_id == 9:
+                    formatted_prompt = self._format_prompt(
+                        prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED)
+                elif step_id == 10:
+                    formatted_prompt = self._format_prompt(
+                        prompt_info=prompt_info, text=value, html=html, messages=messages)
+                elif step_id == 14:
+                    messages = []
+                    formatted_prompt = self._format_prompt(
+                        prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
+                else:
+                    formatted_prompt = self._format_prompt(
+                        prompt_info, value, html, messages)
 
-            messages.append({"role": "user", "content": formatted_prompt})
+                messages.append({"role": "user", "content": formatted_prompt})
 
-            logger.info(f"Отправляем запрос в Claude для step_id: {step_id}")
+                logger.info(
+                    f"Отправляем запрос в Claude для step_id: {step_id}")
 
-            answer = await self._get_claude_response(step_id, prompt_info, messages)
+                answer = await self._get_claude_response(step_id, prompt_info, messages)
 
-            self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
+                self._log_step_prompt_answer(
+                    prompt_info, formatted_prompt, answer)
 
-            
-            logger.info(f"Получен ответ от Claude для step_id: {step_id}")
+                logger.info(f"Получен ответ от Claude для step_id: {step_id}")
 
+                if step_id == 4 and answer is None:
+                    return None
 
-            if step_id == 4 and answer is None:
-                return None
-            
-            
-            answer, _ = await self._process_special_steps(step_id, answer)
-            if step_id in [9, 13, 14] and answer:
-                html = await self.html_modifier.replace_in_file(html, answer)
+                answer, _ = await self._process_special_steps(step_id, answer)
+                if step_id in [9, 13, 14] and answer:
+                    html = await self.html_modifier.replace_in_file(html, answer)
 
-            if answer is None and step_id == 6:
-                return None
+                if answer is None and step_id == 6:
+                    return None
 
-            logger.info(f"Обработан ответ для step_id: {step_id}")
+                logger.info(f"Обработан ответ для step_id: {step_id}")
 
-            messages.append({"role": "assistant", "content": answer})
+                messages.append({"role": "assistant", "content": answer})
 
-        return answer
+            return answer
+
+        except Exception as e:
+            logger.error(f"Ошибка в фунции _process_main_steps: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию _process_main_steps, первый аргумент value: {value}\n Второй аргумент html: {html}\n Третий аргумент messages: {messages}\n Четвертый аргумент steps {steps}")
+            raise
 
     async def _process_step_8(self, html: str, last_answer: List[Dict]) -> None:
         """Обрабатывает финальный шаг диалога (8)"""
-        prompt_info = await self.prompt_manager.get_prompt_by_id(8)
-        if not prompt_info:
-            return
+        try:
+            prompt_info = await self.prompt_manager.get_prompt_by_id(8)
+            if not prompt_info:
+                return
 
-        # answer_logger.info(last_answer)
+            # answer_logger.info(last_answer)
 
-        for index, product in enumerate(last_answer):
-            formatted_prompt = self._format_prompt(
-                prompt_info, "", html, [], h3=product.get('Prompt', ''))
-            logger.info(f"Отправляем запрос в Claude для step_id: 8")
+            for index, product in enumerate(last_answer):
+                formatted_prompt = self._format_prompt(
+                    prompt_info, "", html, [], h3=product.get('Prompt', ''))
+                logger.info(f"Отправляем запрос в Claude для step_id: 8")
 
-            messages = [{"role": "user", "content": formatted_prompt}]
-            answer = await self.client.ask_claude_web(max_tokens=7000, messages=messages)
+                messages = [{"role": "user", "content": formatted_prompt}]
+                answer = await self.client.ask_claude_web(max_tokens=7000, messages=messages)
 
-            # answer = self.html_processor.extract_answer(answer)
+                # answer = self.html_processor.extract_answer(answer)
 
-            # messages.append({"role": "assistant", "content": answer})
-            # answer = await self.client.ask_claude(max_tokens=7000, messages=messages)
+                # messages.append({"role": "assistant", "content": answer})
+                # answer = await self.client.ask_claude(max_tokens=7000, messages=messages)
 
-            answer = self.html_processor.extract_answer(
-                answer).replace('#', '')
-            config.H3_DATA[index]['P'] = answer
-            self._log_step_prompt_answer(prompt_info, formatted_prompt, answer)
+                answer = self.html_processor.extract_answer(
+                    answer).replace('#', '')
+                config.H3_DATA[index]['P'] = answer
+                self._log_step_prompt_answer(
+                    prompt_info, formatted_prompt, answer)
 
-            logger.info(f"Обработан ответ для step_id: 8")
+                logger.info(f"Обработан ответ для step_id: 8")
 
-        await self.html_modifier.process_html_with_h3(html)
+            await self.html_modifier.process_html_with_h3(html)
+            
+        except Exception as e:
+            logger.error(f"Ошибка в фунции _process_step_8: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию _process_step_8, первый аргумент html: {html}\n Второй аргумент last_answer: {last_answer}")
+            raise
 
     def _format_prompt(self, prompt_info: dict = None,
                        value: str = None,
@@ -191,36 +219,47 @@ class NeuronwriterLogic:
                        text: str = "",
                        text_included: str = "") -> str:
         """Форматирует промпт с подстановкой переменных"""
-        format_args = {
-            "h2": value,
-            "answer": messages[-1]["content"] if messages else "",
-            "html": html,
-            "h3": h3,
-            "PRODUCT_NAME": "Prusa Core One",
-            "KEYWORDS": KEYWORDS,
-            "text": text,
-            "text_included": text_included
-        }
-        return prompt_info["text"].format(
-            **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
-        )
+        try:
+            format_args = {
+                "h2": value,
+                "answer": messages[-1]["content"] if messages else "",
+                "html": html,
+                "h3": h3,
+                "PRODUCT_NAME": "Prusa Core One",
+                "KEYWORDS": KEYWORDS,
+                "text": text,
+                "text_included": text_included
+            }
+            return prompt_info["text"].format(
+                **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
+            )
+        except Exception as e:
+            logger.error(f"Ошибка в фунции _format_prompt: {e}")
+            raise
+
 
     async def _get_claude_response(self, step_id: int, prompt_info: dict, messages: list) -> str:
         """Получает ответ от Claude API в зависимости от шага"""
-        if step_id in [4, 5, 10, 11, 12, 14]:
-            answer = await self.client.ask_claude(
-                max_tokens=prompt_info["max_tokens"],
-                messages=messages,
-            )
-        else:
-            answer = await self.client.ask_claude_web(
-                max_tokens=prompt_info["max_tokens"],
-                messages=messages,
-            )
-        # if step_id == 14:
-        #     return answer
+        try:
+            if step_id in [4, 5, 10, 11, 12, 14]:
+                answer = await self.client.ask_claude(
+                    max_tokens=prompt_info["max_tokens"],
+                    messages=messages,
+                )
+            else:
+                answer = await self.client.ask_claude_web(
+                    max_tokens=prompt_info["max_tokens"],
+                    messages=messages,
+                )
+            # if step_id == 14:
+            #     return answer
 
-        return self.html_processor.extract_answer(answer)
+            return self.html_processor.extract_answer(answer)
+        except Exception as e:
+            logger.error(f"Ошибка в фунции _get_claude_response: {e}")
+            logger.debug(
+                f"Аргументы переданный в фунцию _get_claude_response, первый аргумент step_id: {step_id}\n Второй аргумент prompt_info: {prompt_info}\n Третий аргумент messages: {messages}")
+            raise
 
     def _log_step_prompt_answer(self, prompt_info: dict, prompt: str, answer: str) -> None:
         """Логирует запрос и ответ"""
@@ -244,6 +283,8 @@ class NeuronwriterLogic:
 
     async def neuronwriter_logic(self) -> None:
         """Основная логика работы с Neuronwriter"""
+        logger.info(f"Начало работы функции neuronwriter_logic")
+
         writer = Neuronwriter()
         parser = ParserNeuronwriter()
         sample_text = await self.html_processor.read_file("data/combined.html")
@@ -268,11 +309,9 @@ class NeuronwriterLogic:
             #                    for item in terms.get("content_extended", []))
             basic = await parser.analyze_terms_article("basic:", query)
 
-            # # Генерируем контент с помощью Claude
+            # Генерируем контент с помощью Claude
             title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
-            # print(222222222)
-            # print(title)
-            # return
+
             desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
             h1 = await self.format_and_ask("h1", h1_terms, sample_text, "Prusa Core One")
 
@@ -288,6 +327,8 @@ class NeuronwriterLogic:
             # Импортируем финальные title и description
             sample_text = await self.html_processor.read_file("data/combined.html")
             await writer.import_title_and_desc(sample_text, title, desc, query)
+            logger.info(f"Функция neuronwriter_logic завершина без ошибок")
 
         except Exception as e:
-            logger.error(f"Error in neurowriter_logic: {e}")
+            logger.error(f"Ошибка в фунции neuronwriter_logic: {e}")
+            raise

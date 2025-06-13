@@ -6,9 +6,9 @@ import requests
 from typing import List, Optional, Tuple
 from config.logging_config import setup_logger
 from app.client.claude import ClaudeClient
-from app.service.neuronwriter.prompt_manager import PromptManager
+from app.service.site_services.prompt_manager import PromptManager
 from urllib.parse import unquote
-from app.service.neuronwriter.html_processor import HTMLProcessor
+from app.service.site_services.html_processor import HTMLProcessor
 
 dataforseo_logger = setup_logger('DataForSeo')
 

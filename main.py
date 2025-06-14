@@ -41,16 +41,16 @@ async def retry_async_function(
 
 
 async def main():
-    # start_time = perf_counter()  # Засекаем время начала
+    start_time = perf_counter()  # Засекаем время начала
 
     # # # # Инициализация компонентов
-    # transcriber = MediaTranscriber(
+    transcriber = MediaTranscriber(
 
-    #     model_name="base",
-    #     language="en"
-    # )
+        model_name="base",
+        language="en"
+    )
     client = ClaudeClient()
-    # # app = AppLogic(transcriber, client)
+    app = AppLogic(transcriber, client)
     # # # # # # downloader_video = YouTubeDownloader()
     # # # # # await downloader_video.search_and_download("Prusa Core One review")
 
@@ -79,17 +79,17 @@ async def main():
     #         verbose=True
     #     )
 
-    # urls = await get_google_links("Prusa Core One in-depth review")
-    # async with WebsiteParser(headless=True) as downloader:
-    #         # Скачиваем текст с каждого сайта
-    #         for url in urls:
-    #             url = url.strip()  # Убираем лишние пробелы и символы новой строки
-    #             print(f"Скачиваем контент с сайта: {url}")
-    #             await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
+    urls = await get_google_links("Prusa Core One review")
+    async with WebsiteParser(headless=True) as downloader:
+        # Скачиваем текст с каждого сайта
+        for url in urls:
+            url = url.strip()  # Убираем лишние пробелы и символы новой строки
+            print(f"Скачиваем контент с сайта: {url}")
+            await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
 
-    #         # print(first_url)
-    #         # # Скачиваем и фильтруем изображения только с первого сайта
-    #         # await downloader.download_images(first_url)
+        # print(first_url)
+        # # Скачиваем и фильтруем изображения только с первого сайта
+        # await downloader.download_images(first_url)
 
     # await downloader.filter_images_by_size(
     #     min_width=350,
@@ -97,8 +97,8 @@ async def main():
     #     verbose=True
     # )
 
-    # a = AsyncGoogleImagesScraper()
-    # b = await a.get_product_images("prusa core one")
+    a = AsyncGoogleImagesScraper()
+    b = await a.get_product_images("prusa core one")
 
     # async with WebsiteParser(headless=True) as downloader:
     #     # Скачиваем текст с каждого сайта
@@ -110,33 +110,35 @@ async def main():
     #         # Скачиваем и фильтруем изображения только с первого сайта
     #         await downloader.download_images(url)
 
-    # async with WebsiteParser(headless=True) as downloader:
-    #     await downloader.filter_images_by_size(
-    #         min_width=600,
-    #         min_height=400,
-    #         verbose=True
-    #     )
+    async with WebsiteParser(headless=True) as downloader:
+        await downloader.filter_images_by_size(
+            min_width=600,
+            min_height=400,
+            verbose=True
+        )
 
-    # llm_client = GPTClient()
-    # processor = ImageProcessor(llm_client)
-    # await processor.delete_duplicates()
-    # await processor.process_directory(
-    #     image_dir=PATH_TO_IMG,
-    #     output_file=PATH_TO_ANALYSIS_RESULTS
-    # )
+    llm_client = GPTClient()
+    processor = ImageProcessor(llm_client)
+    await processor.delete_duplicates()
+    await processor.process_directory(
+        image_dir=PATH_TO_IMG,
+        output_file=PATH_TO_ANALYSIS_RESULTS
+    )
 
-    # # Обработка видео
-    # text = await app.process_videos(
-    #     folder_path="data/videos",
-    #     output_prefix="result_"
-    # )
+    # Обработка видео
+    text = await app.process_videos(
+        folder_path="data/videos",
+        output_prefix="result_"
+    )
 
-    # # Выполнение диалога
-    # await app.run_dialogue(
-    #     initial_text=text,
-    #     json_file_path="prompts.json"
-    # )
+    # Выполнение диалога
+    await app.run_dialogue(
+        initial_text=text,
+        json_file_path="prompts.json"
+    )
 
+    converter = MarkdownToHTMLConverter()
+    await converter.process_files()
     # converter = MarkdownToHTMLConverter()
     # await converter.process_files()
     # print(config.TOTAL_PRICE)

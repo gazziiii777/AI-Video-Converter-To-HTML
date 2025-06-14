@@ -9,7 +9,7 @@ from typing import Optional
 import aiofiles
 from config.config import FILES_FOR_WEB, PATH_TO_POMPTS_OUT
 
-
+ 
 class AppLogic:
     def __init__(self, transcriber, client):
         self.transcriber = transcriber
@@ -17,10 +17,10 @@ class AppLogic:
 
     async def process_videos(self, folder_path: str, output_prefix: str) -> str:
         """Обрабатывает видео и возвращает объединённый текст"""
-        # self.transcriber.process_folder(
-        #     folder_path=folder_path,
-        #     output_prefix=output_prefix
-        # )
+        self.transcriber.process_folder(
+            folder_path=folder_path,
+            output_prefix=output_prefix
+        )
         return self.transcriber.merge_txt_files(folder_path='data/txt_output')
 
     async def run_dialogue(self, initial_text: str, json_file_path: str) -> None:

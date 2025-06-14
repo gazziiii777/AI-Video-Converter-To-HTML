@@ -8,13 +8,15 @@ async def get_google_links(query):
         "q": query,
         "api_key": settings.SERPAPI_API_KEY,
         "num": 10,  # Запрашиваем 5 результатов
-        "location": "New York, United States"
+        "location": "New York, United States",
+        "exclude_sites": "youtube.com"  # Исключаем YouTube
     }
 
     try:
         response = requests.get(SERPAPI_BASE_URL, params=params)
         response.raise_for_status()
         data = response.json()
+        print(data)
     except Exception as e:
         print(f"Ошибка при получении результатов: {str(e)}")
         return []

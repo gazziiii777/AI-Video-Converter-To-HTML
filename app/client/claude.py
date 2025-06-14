@@ -75,7 +75,7 @@ class ClaudeClient:
         claude_messages = self._convert_to_claude_format(messages)
         for attempt in range(1, max_retries + 1):
             try:
-                logger.info("Запрос в claude отправляен")
+                logger.info("Запрос в claude_web отправляен")
 
                 response = await anthropic_client.messages.create(
                     model="claude-3-7-sonnet-latest",
@@ -102,8 +102,10 @@ class ClaudeClient:
                     if block.type == 'text'
                 ]
                 answer = '\n'.join(answer_blocks)
-                logger.info(f"Ответ от claude получен и обрабоатн")
-
+                logger.info(f"Ответ от claude_web получен и обрабоатн")
+                if file_name is not None:
+                    with open(file_name, "w", encoding="utf-8") as f:
+                        f.write(answer)
                 # answer = response.content[0].text
                 # Расчет стоимости
                 input_cost = response.usage.input_tokens * 3 / 1_000_000

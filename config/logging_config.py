@@ -15,9 +15,9 @@ def setup_logger(name):
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     # Если имя логгера == "special" → пишем в special.log
-    if name in ['Neuronwriter-Prompt']:
+    if name in ['Neuronwriter-Prompt', 'AppLogic-Prompt']:
         log_file = "logs/prompts.log"
-    elif name in ['Neuronwriter-Answer']:
+    elif name in ['Neuronwriter-Answer', 'AppLogic-Answer']:
         log_file = "logs/answers.log"
     elif name in ['DataForSeo']:
         log_file = "logs/dataforseo.log"

@@ -13,10 +13,13 @@ from app.service.browser.link_searcher import get_google_links
 from time import perf_counter
 from app.app_logic import AppLogic
 from app.service.site_services.neuronwriter.logic import NeuronwriterLogic
-import config.config
+import config.config as config
 from config.config import PATH_TO_IMG, PATH_TO_ANALYSIS_RESULTS
 from app.service.browser.youtube_downloader import YouTubeDownloader
 from app.service.site_services.dataforseo.logic import AsyncGoogleImagesScraper
+from config.logging_config import setup_logger
+
+logger = setup_logger('main')
 
 
 async def retry_async_function(
@@ -41,7 +44,7 @@ async def retry_async_function(
 
 
 async def main():
-    start_time = perf_counter()  # Засекаем время начала
+    # start_time = perf_counter()  # Засекаем время начала
 
     # # # # Инициализация компонентов
     transcriber = MediaTranscriber(
@@ -97,8 +100,7 @@ async def main():
     #     verbose=True
     # )
 
-    a = AsyncGoogleImagesScraper()
-    b = await a.get_product_images("prusa core one")
+    await AsyncGoogleImagesScraper().get_product_images("prusa core one")
 
     # async with WebsiteParser(headless=True) as downloader:
     #     # Скачиваем текст с каждого сайта
@@ -131,6 +133,10 @@ async def main():
         output_prefix="result_"
     )
 
+    # with open("ad.txt", 'w', encoding='utf-8') as file:  # режим 'w' - запись (перезапись)
+    #     file.write(text)
+
+    # return
     # Выполнение диалога
     await app.run_dialogue(
         initial_text=text,
@@ -141,11 +147,13 @@ async def main():
     await converter.process_files()
     # converter = MarkdownToHTMLConverter()
     # await converter.process_files()
-    # print(config.TOTAL_PRICE)
+
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
     neuronwriter = NeuronwriterLogic(client)
     await neuronwriter.neuronwriter_logic()
+
+    logger.info(f"Цена за создание странички: {config.TOTAL_PRICE}")
 
     # b = await YouTubeDownloader().parse_channel_videos()
     # c = await YouTubeDownloader().search("Prusa CORE One Review", True)

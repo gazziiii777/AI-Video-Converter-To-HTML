@@ -248,15 +248,26 @@ class WebsiteParser:
                     else:
                         results['remaining'] += 1
 
-                        # Увеличиваем изображение, если ширина < 300
-                        if width > 800 or height > 800:
-                            new_size = (int(width / 1.5), int(height / 1.5))
-                            resized_img = img.resize(new_size, Image.LANCZOS)
+                        width, height = img.size
+
+                        while width > 800 or height > 800:
+                            # Вычисляем новые размеры
+                            new_width = int(width / 1.2)
+                            new_height = int(height / 1.2)
+                            
+                            # Уменьшаем изображение
+                            resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+                            
+                            # Сохраняем изменения
                             resized_img.save(file_path)
                             results['resized'] += 1
+                            
                             if verbose:
-                                logger.info(
-                                    f"Уменьшенно: {filename} → {new_size}")
+                                logger.info(f"Уменьшено: {filename} → ({new_width}, {new_height})")
+                            
+                            # Обновляем текущие размеры для следующей итерации
+                            width, height = new_width, new_height
+                            img = resized_img  # Обновляем изображение для следующего уменьшения
 
             except Exception as e:
                 results['errors'] += 1

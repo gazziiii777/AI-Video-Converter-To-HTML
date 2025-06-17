@@ -8,8 +8,13 @@ from bs4 import BeautifulSoup
 from typing import Optional
 import aiofiles
 from config.config import FILES_FOR_WEB, PATH_TO_POMPTS_OUT
+from config.logging_config import setup_logger
 
- 
+
+prompt_logger = setup_logger('AppLogic-Prompt')
+answer_logger = setup_logger('AppLogic-Answer')
+
+
 class AppLogic:
     def __init__(self, transcriber, client):
         self.transcriber = transcriber
@@ -49,6 +54,9 @@ class AppLogic:
                 if step.get("isEnabled", False) and step.get("type") == "message":
                     messages.append({"role": "user", "content": step["text"]})
 
+                    prompt_logger.info(
+                        f"NUMBER: {prompt_counter} PROMPT: {messages}")
+
                     if prompt_counter in FILES_FOR_WEB:
                         answer = await self.client.ask_claude_web(
                             max_tokens=step["max_tokens"],
@@ -61,6 +69,9 @@ class AppLogic:
                             messages=messages,
                             file_name=f"{PATH_TO_POMPTS_OUT}/output_prompt_{prompt_counter}.txt"
                         )
+
+                    answer_logger.info(
+                        f"NUMBER: {prompt_counter} ANSWER: {answer}")
                     # messages_remove_quotes = [
                     #     {"role": "user",
                     #         "content": f"Context: {answer}\n\nRemove all quotes from this text (you can rewrite it in other words, but without quotes!)"}

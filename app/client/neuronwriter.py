@@ -73,13 +73,14 @@ BASE_URL = "https://app.neuronwriter.com/neuron-api/0.5/writer"
 # coding=utf-8
 
 class Neuronwriter:
-    def __init__(self):
+    def __init__(self, product_name):
         self.base_url = NEUROWRITER_BASE_URL
         self.headers = {
             "X-API-KEY": API_KEY,
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
+        self.product_name = product_name
 
     async def _get_project(self):
         async with aiohttp.ClientSession() as session:
@@ -94,7 +95,7 @@ class Neuronwriter:
     async def _create_query(self):
         payload = json.dumps({
             "project": await self._get_project(),
-            "keyword": "prusa core one",
+            "keyword": self.product_name,
             "language": "English",
             "engine": "google.com"
         })

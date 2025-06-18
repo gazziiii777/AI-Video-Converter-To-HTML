@@ -45,7 +45,7 @@ async def retry_async_function(
 
 async def main():
     # start_time = perf_counter()  # Засекаем время начала
-
+    PRINTER_NAME = "Prusa Core One"
     # # # # Инициализация компонентов
     transcriber = MediaTranscriber(
 
@@ -55,7 +55,7 @@ async def main():
     client = ClaudeClient()
     app = AppLogic(transcriber, client)
     # # # # # # downloader_video = YouTubeDownloader()
-    # # # # # await downloader_video.search_and_download("Prusa Core One review")
+    # # # # # await downloader_video.search_and_download(f"{PRINTER_NAME} review")
 
     # urls = await get_google_links("Prusa CORE One")
 
@@ -82,13 +82,13 @@ async def main():
     #         verbose=True
     #     )
 
-    urls = await get_google_links("Prusa Core One review")
+    urls = await get_google_links(f"{PRINTER_NAME} review")
     async with WebsiteParser(headless=True) as downloader:
         # Скачиваем текст с каждого сайта
         for url in urls:
             url = url.strip()  # Убираем лишние пробелы и символы новой строки
             print(f"Скачиваем контент с сайта: {url}")
-            await downloader.save_clean_page_content(url, "Prusa Core One in-depth review")
+            await downloader.save_clean_page_content(url, f"{PRINTER_NAME} in-depth review")
 
         # print(first_url)
         # # Скачиваем и фильтруем изображения только с первого сайта
@@ -100,7 +100,7 @@ async def main():
     #     verbose=True
     # )
 
-    await AsyncGoogleImagesScraper().get_product_images("prusa core one")
+    await AsyncGoogleImagesScraper().get_product_images(f"{PRINTER_NAME}")
 
     # async with WebsiteParser(headless=True) as downloader:
     #     # Скачиваем текст с каждого сайта
@@ -127,7 +127,7 @@ async def main():
         output_file=PATH_TO_ANALYSIS_RESULTS
     )
 
-    # Обработка видео
+    # Обработка видео (!!!ДОСТАТЬ ИЗ КОМЕТРАИВЕР ВНУТРИ)
     text = await app.process_videos(
         folder_path="data/videos",
         output_prefix="result_"
@@ -144,14 +144,14 @@ async def main():
     )
 
     converter = MarkdownToHTMLConverter()
-    await converter.process_files()
+    await converter.process_files(product_name = PRINTER_NAME)
     # converter = MarkdownToHTMLConverter()
     # await converter.process_files()
 
     # end_time = perf_counter()  # Засекаем время окончания
     # print(f"Программа выполнилась за {end_time - start_time:.2f} секунд")
     neuronwriter = NeuronwriterLogic(client)
-    await neuronwriter.neuronwriter_logic()
+    await neuronwriter.neuronwriter_logic(product_name = PRINTER_NAME)
 
     logger.info(f"Цена за создание странички: {config.TOTAL_PRICE}")
 

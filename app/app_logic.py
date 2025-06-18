@@ -21,11 +21,11 @@ class AppLogic:
         self.client = client
 
     async def process_videos(self, folder_path: str, output_prefix: str) -> str:
-        """Обрабатывает видео и возвращает объединённый текст"""
-        self.transcriber.process_folder(
-            folder_path=folder_path,
-            output_prefix=output_prefix
-        )
+        # """Обрабатывает видео и возвращает объединённый текст"""
+        # self.transcriber.process_folder(
+        #     folder_path=folder_path,
+        #     output_prefix=output_prefix
+        # )
         return self.transcriber.merge_txt_files(folder_path='data/txt_output')
 
     async def run_dialogue(self, initial_text: str, json_file_path: str) -> None:

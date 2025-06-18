@@ -285,22 +285,22 @@ class WebsiteParser:
         return results
 
 
-async def main():
-    async with WebsiteParser() as downloader:
-        # Скачиваем изображения
-        images = await downloader.download_images(
-            "https://www.prusa3d.com/product/prusa-core-one/",
-            "prusa_images"
-        )
-        print(f"Скачано {len(images)} изображений")
+# async def main():
+#     async with WebsiteParser() as downloader:
+#         # Скачиваем изображения
+#         images = await downloader.download_images(
+#             "https://www.prusa3d.com/product/prusa-core-one/",
+#             "prusa_images"
+#         )
+#         print(f"Скачано {len(images)} изображений")
 
-        # Фильтруем по размеру
-        results = WebsiteParser.filter_images_by_size(
-            "prusa_images",
-            min_width=100,
-            min_height=100
-        )
+#         # Фильтруем по размеру
+#         results = WebsiteParser.filter_images_by_size(
+#             "prusa_images",
+#             min_width=100,
+#             min_height=100
+#         )
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# if __name__ == "__main__":
+#     asyncio.run(main())

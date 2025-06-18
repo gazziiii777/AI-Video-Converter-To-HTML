@@ -66,23 +66,23 @@ class NeuronwriterLogic:
                 f"Аргументы переданный в фунцию format_and_ask, первый аргумент label: {label}\n Второй аргумент value: {value}\n Третий аргумент html: {html}\n Четвертый аргумент product_name {product_name}")
             raise
 
-    async def h2_dialogue(self, value: str, html: str) -> Optional[Any]:
+    async def h2_dialogue(self, value: str, html: str, product_name: str) -> Optional[Any]:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
         try:
             messages = []
             last_answer = None
 
             # Обработка основных шагов диалога (4-7)
-            last_answer = await self._process_main_steps(value, html, messages, [4, 5, 6, 7])
+            last_answer = await self._process_main_steps(value, html, messages, [4, 5, 6, 7], product_name)
 
             # Обработка шага 8 (если есть данные из шага 7)
             if last_answer:
                 html = await self.html_processor.read_file("data/combined.html")
-                await self._process_step_8(html, last_answer)
+                await self._process_step_8(html, last_answer, product_name)
 
             if config.H2_INCLUDED:
                 html = await self.html_processor.read_file("data/combined.html")
-                await self._process_main_steps(value, html, messages, [9])
+                await self._process_main_steps(value, html, messages, [9], product_name)
 
             return last_answer
         except Exception as e:
@@ -91,14 +91,14 @@ class NeuronwriterLogic:
                 f"Аргументы переданный в фунцию h2_dialogue, первый аргумент value: {value}\n Второй аргумент html: {html}")
             raise
 
-    async def basic_and_extended_dialogue(self, value: str, html: str) -> Optional[Any]:
+    async def basic_and_extended_dialogue(self, value: str, html: str, product_name:str) -> Optional[Any]:
         """Выполняет диалог на основе prompt.json, обрабатывая шаги 4-8"""
         try:
             messages = []
             last_answer = None
             html = await self.html_processor.read_file("data/combined.html")
             # Обработка основных шагов диалога (4-7)
-            last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14])
+            last_answer = await self._process_main_steps(value, html, messages, [10, 11, 12, 13, 14], product_name)
 
             # # Обработка шага 8 (если есть данные из шага 7)
             # if last_answer:
@@ -114,7 +114,7 @@ class NeuronwriterLogic:
                 f"Аргументы переданный в фунцию basic_and_extended_dialogue, первый аргумент value: {value}\n Второй аргумент html: {html}")
             raise
 
-    async def _process_main_steps(self, value: str, html: str, messages: list, steps: list) -> Optional[Any]:
+    async def _process_main_steps(self, value: str, html: str, messages: list, steps: list, product_name: str) -> Optional[Any]:
         """Обрабатывает основные шаги диалога"""
         try:
             last_answer = None
@@ -126,17 +126,17 @@ class NeuronwriterLogic:
 
                 if step_id == 9:
                     formatted_prompt = self._format_prompt(
-                        prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED)
+                        prompt_info, value, html, messages, KEYWORDS=config.H2_INCLUDED, product_name = product_name)
                 elif step_id == 10:
                     formatted_prompt = self._format_prompt(
-                        prompt_info=prompt_info, text=value, html=html, messages=messages)
+                        prompt_info=prompt_info, text=value, html=html, messages=messages, product_name = product_name)
                 elif step_id == 14:
                     messages = []
                     formatted_prompt = self._format_prompt(
-                        prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED)
+                        prompt_info=prompt_info, text=value, html=html, messages=messages, text_included=config.BASIC_INCLUDED, product_name = product_name)
                 else:
                     formatted_prompt = self._format_prompt(
-                        prompt_info, value, html, messages)
+                        prompt_info, value, html, messages, product_name = product_name)
 
                 messages.append({"role": "user", "content": formatted_prompt})
 
@@ -172,7 +172,7 @@ class NeuronwriterLogic:
                 f"Аргументы переданный в фунцию _process_main_steps, первый аргумент value: {value}\n Второй аргумент html: {html}\n Третий аргумент messages: {messages}\n Четвертый аргумент steps {steps}")
             raise
 
-    async def _process_step_8(self, html: str, last_answer: List[Dict]) -> None:
+    async def _process_step_8(self, html: str, last_answer: List[Dict], product_name: str) -> None:
         """Обрабатывает финальный шаг диалога (8)"""
         try:
             prompt_info = await self.prompt_manager.get_prompt_by_id(8)
@@ -183,7 +183,7 @@ class NeuronwriterLogic:
 
             for index, product in enumerate(last_answer):
                 formatted_prompt = self._format_prompt(
-                    prompt_info, "", html, [], h3=product.get('Prompt', ''))
+                    prompt_info, "", html, [], h3=product.get('Prompt', ''), product_name = product_name)
                 logger.info(f"Отправляем запрос в Claude для step_id: 8")
 
                 messages = [{"role": "user", "content": formatted_prompt}]
@@ -217,7 +217,8 @@ class NeuronwriterLogic:
                        h3: str = "",
                        KEYWORDS: str = "",
                        text: str = "",
-                       text_included: str = "") -> str:
+                       text_included: str = "",
+                       product_name: str="") -> str:
         """Форматирует промпт с подстановкой переменных"""
         try:
             format_args = {
@@ -225,7 +226,7 @@ class NeuronwriterLogic:
                 "answer": messages[-1]["content"] if messages else "",
                 "html": html,
                 "h3": h3,
-                "PRODUCT_NAME": "Prusa Core One",
+                "PRODUCT_NAME": product_name,
                 "KEYWORDS": KEYWORDS,
                 "text": text,
                 "text_included": text_included
@@ -281,11 +282,11 @@ class NeuronwriterLogic:
         """Удаляет символ # из начала строки"""
         return line.lstrip('#') if line.startswith('#') else line
 
-    async def neuronwriter_logic(self) -> None:
+    async def neuronwriter_logic(self, product_name) -> None:
         """Основная логика работы с Neuronwriter"""
         logger.info(f"Начало работы функции neuronwriter_logic")
 
-        writer = Neuronwriter()
+        writer = Neuronwriter(product_name)
         parser = ParserNeuronwriter()
         sample_text = await self.html_processor.read_file("data/combined.html")
 
@@ -310,20 +311,20 @@ class NeuronwriterLogic:
             basic = await parser.analyze_terms_article("basic:", query)
 
             # Генерируем контент с помощью Claude
-            title = await self.format_and_ask("title", titles_terms, sample_text, "Prusa Core One")
+            title = await self.format_and_ask("title", titles_terms, sample_text, product_name)
 
-            desc = await self.format_and_ask("desc", desc_terms, sample_text, "Prusa Core One")
-            h1 = await self.format_and_ask("h1", h1_terms, sample_text, "Prusa Core One")
+            desc = await self.format_and_ask("desc", desc_terms, sample_text, product_name)
+            h1 = await self.format_and_ask("h1", h1_terms, sample_text, product_name)
 
             # # Обновляем HTML с новым H1
             await self.html_processor.insert_h1("data/combined.html", h1)
 
             # Обрабатываем H2 диалог
-            await self.h2_dialogue(h2_terms, sample_text)
+            await self.h2_dialogue(h2_terms, sample_text, product_name)
 
             sample_text = await self.html_processor.read_file("data/combined.html")
 
-            await self.basic_and_extended_dialogue(basic, sample_text)
+            await self.basic_and_extended_dialogue(basic, sample_text, product_name)
             # Импортируем финальные title и description
             sample_text = await self.html_processor.read_file("data/combined.html")
             await writer.import_title_and_desc(sample_text, title, desc, query)

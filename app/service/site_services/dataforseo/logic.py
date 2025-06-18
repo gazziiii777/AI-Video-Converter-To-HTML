@@ -24,22 +24,22 @@ class AsyncGoogleImagesScraper:
         self.base_delay = 15
         self.timeout = aiohttp.ClientTimeout(total=300)
 
-    def _format_prompt(self, prompt_info: dict = None,
-                       url_list: str = None) -> str:
-        """Форматирует промпт с подстановкой переменных"""
-        try:
-            format_args = {
-                "url_list": url_list,
-                "PRODUCT_NAME": "Prusa Core One",
-            }
-            return prompt_info["text"].format(
-                **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
-            )
-        except Exception as e:
-            dataforseo_logger.error(f"Ошибка в фунции _format_prompt: {e}")
-            dataforseo_logger.debug(
-                f"Аргументы переданный в фунцию _format_prompt, первый аргумент prompt_info: {prompt_info}\n Второй аргумент url_list: {url_list}")
-            raise
+    # def _format_prompt(self, prompt_info: dict = None,
+    #                    url_list: str = None) -> str:
+    #     """Форматирует промпт с подстановкой переменных"""
+    #     try:
+    #         format_args = {
+    #             "url_list": url_list,
+    #             "PRODUCT_NAME": product_name,
+    #         }
+    #         return prompt_info["text"].format(
+    #             **{k: v for k, v in format_args.items() if k in prompt_info["text"]}
+    #         )
+    #     except Exception as e:
+    #         dataforseo_logger.error(f"Ошибка в фунции _format_prompt: {e}")
+    #         dataforseo_logger.debug(
+    #             f"Аргументы переданный в фунцию _format_prompt, первый аргумент prompt_info: {prompt_info}\n Второй аргумент url_list: {url_list}")
+    #         raise
 
 
     async def _make_request(self, method: str, endpoint: str, data: dict = None) -> dict:
@@ -240,13 +240,15 @@ class AsyncGoogleImagesScraper:
         """Статический метод для получения изображений по продукту"""
         keywords = [
             f"{product_name}",
-            f"{product_name} Maintenance",
-            f"{product_name} Sample Prints",
-            f"{product_name} Consumables",
+            f"{product_name} Print Quality",
+            f"{product_name} Samples",
             f"{product_name} Build Volume",
-            f"{product_name} Menu",
-            f"{product_name} Software",
-            f"{product_name} Accessories"
+            f"{product_name} Printer Controls",
+            f"{product_name} Connectivity Options",
+            f"{product_name} Slicing Software",
+            f"{product_name} Frame Design",
+            f"{product_name} What is in the box",
+            f"{product_name} Main Accessory"           
         ]
 
         # Создаем экземпляр с дефолтными учетными данными

@@ -257,7 +257,7 @@ class MarkdownToHTMLConverter:
         result = await self._parse_input_data(answer)
         return result
 
-    async def combine_files_to_html(self, output_files, output_path="combined.html", img_description=None):
+    async def combine_files_to_html(self, output_files, product_name, output_path="combined.html", img_description=None):
         """Объединяет файлы в один HTML"""
         client = ClaudeClient()
         used_images = set()
@@ -296,7 +296,7 @@ class MarkdownToHTMLConverter:
                 # Собираем обратно с двумя переносами
                 content = '\n'.join(lines) + "\n\n"
                 video_from_channel = await YouTubeDownloader().parse_channel_videos()
-                video_from_search = await YouTubeDownloader().search("Prusa CORE One Review", True)
+                video_from_search = await YouTubeDownloader().search(f"{product_name} Review", True)
 
                 formatted_video_from_channel = self.format_links(
                     video_from_channel)
@@ -305,7 +305,7 @@ class MarkdownToHTMLConverter:
 
                 messages = [
                     {"role": "user",
-                     "content": f"PROMPT:  You are tasked with selecting a YouTube review video for a product page. Your objective is to choose the most appropriate video based on specific criteria. The product name is: <product_name> 'Prusa CORE One' </product_name> Here are the videos from Top 3D Shop's YouTube Channel: <top3dshop_youtube_videos> YouTube Link Vidio Title {formatted_video_from_channel} </top3dshop_youtube_videos> Here are the videos from YouTube search for Prusa CORE One <search_results> YouTube Link Vidio Title Author of the video {formatted_video_from_search} </search_results> Analyze the search results and select one YouTube review video based on the following criteria, in order of priority: 1. If a video by Top 3D Shop exists, select that video (in English). 2. If a video by the manufacturer exists, select that video. 3. If no Top 3D Shop or manufacturer video is available, select the most comprehensive and highly-rated review. Important requirements: - Select only one YouTube review video specifically relevant to the product name. - Exclude videos about previous generations or significantly different versions. - Output only the final selected video URL as a clickable link, with no additional text or explanation. - The output must be a clean YouTube link in the format: https://www.youtube.com/watch?v=XXXXXXXXXXX - Remove any extra URL parameters (such as &pp, &t=, etc.)—the link must contain only the base ?v= parameter. - Do not include any tags, timestamps, or formatting other than the clickable link. - Do not include any explanations, self-references, or additional output. Your final output should be in the following format: <answer> [The selected YouTube video URL] </answer> "}
+                     "content": f"PROMPT:  You are tasked with selecting a YouTube review video for a product page. Your objective is to choose the most appropriate video based on specific criteria. The product name is: <product_name> '{product_name}' </product_name> Here are the videos from Top 3D Shop's YouTube Channel: <top3dshop_youtube_videos> YouTube Link Vidio Title {formatted_video_from_channel} </top3dshop_youtube_videos> Here are the videos from YouTube search for {product_name} <search_results> YouTube Link Vidio Title Author of the video {formatted_video_from_search} </search_results> Analyze the search results and select one YouTube review video based on the following criteria, in order of priority: 1. If a video by Top 3D Shop exists, select that video (in English). 2. If a video by the manufacturer exists, select that video. 3. If no Top 3D Shop or manufacturer video is available, select the most comprehensive and highly-rated review. Important requirements: - Select only one YouTube review video specifically relevant to the product name. - Exclude videos about previous generations or significantly different versions. - Output only the final selected video URL as a clickable link, with no additional text or explanation. - The output must be a clean YouTube link in the format: https://www.youtube.com/watch?v=XXXXXXXXXXX - Remove any extra URL parameters (such as &pp, &t=, etc.)—the link must contain only the base ?v= parameter. - Do not include any tags, timestamps, or formatting other than the clickable link. - Do not include any explanations, self-references, or additional output. Your final output should be in the following format: <answer> [The selected YouTube video URL] </answer> "}
                 ]
                 answer = await client.ask_claude_web(
                     max_tokens=4000,
@@ -447,7 +447,7 @@ class MarkdownToHTMLConverter:
     async def _create_file_html(self, files_to_combine):
         pass
 
-    async def process_files(self, file_numbers=None, max_attempts=5):
+    async def process_files(self, product_name, file_numbers=None, max_attempts=5):
         """
         Основной метод для обработки файлов с повторными попытками при ошибках
         :param file_numbers: список номеров файлов (например, [4, 8, 12])
@@ -476,7 +476,7 @@ class MarkdownToHTMLConverter:
             try:
                 # Создаем HTML файл
                 await self.combine_files_to_html(
-                    files_to_combine, html_output_path, img_description=img_description)
+                    files_to_combine, product_name, html_output_path, img_description=img_description)
 
                 # Дополнительно создаем TXT файл
                 # await self._combine_files_to_txt(
